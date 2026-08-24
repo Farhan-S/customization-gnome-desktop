@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Pixegami Theme",
+  "version": "1.0",
+  "description": "Navy/mint theme matching the Pixegami terminal palette (#0C1C25 / #86FFAF)",
+  "theme": {
+    "colors": {
+      "frame": [12, 28, 37],
+      "frame_inactive": [21, 37, 53],
+      "toolbar": [21, 37, 53],
+      "toolbar_text": [134, 255, 175],
+      "toolbar_button_icon": [134, 255, 175],
+      "tab_text": [134, 255, 175],
+      "tab_background_text": [189, 195, 199],
+      "bookmark_text": [134, 255, 175],
+      "ntp_background": [12, 28, 37],
+      "ntp_text": [134, 255, 175],
+      "ntp_link": [73, 255, 109]
+    }
+  }
+}
