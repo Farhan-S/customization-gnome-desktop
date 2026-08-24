@@ -19,7 +19,10 @@
   "editor.inlineSuggest.enabled": true,
 
   "workbench.colorTheme": "Catppuccin Mocha",
-  "workbench.iconTheme": "catppuccin-mocha",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.productIconTheme": "material-product-icons",
+  "material-icon-theme.folders.color": "#86FFAF",
+  "material-icon-theme.rootFolders.color": "#86FFAF",
   "workbench.list.smoothScrolling": true,
   "workbench.tree.indent": 16,
   "workbench.startupEditor": "none",
@@ -27,7 +30,7 @@
 
   "breadcrumbs.enabled": true,
 
-  "terminal.integrated.fontFamily": "MesloLGS NF",
+  "terminal.integrated.fontFamily": "FiraCode Nerd Font Mono",
   "terminal.integrated.fontSize": 14,
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.smoothScrolling": true,
@@ -45,6 +48,54 @@
   "explorer.confirmDelete": true,
 
   "zenMode.hideLineNumbers": false,
+
+  "workbench.colorCustomizations": {
+    "[Catppuccin Mocha]": {
+      "focusBorder": "#86FFAF",
+      "textLink.foreground": "#86FFAF",
+      "textLink.activeForeground": "#93FF91",
+      "editorLink.activeForeground": "#86FFAF",
+      "button.background": "#205C57",
+      "button.hoverBackground": "#2a7a73",
+      "button.foreground": "#86FFAF",
+      "activityBar.activeBorder": "#86FFAF",
+      "activityBarBadge.background": "#86FFAF",
+      "activityBarBadge.foreground": "#0C1C25",
+      "badge.background": "#86FFAF",
+      "badge.foreground": "#0C1C25",
+      "progressBar.background": "#86FFAF",
+      "editorCursor.foreground": "#86FFAF",
+      "list.activeSelectionForeground": "#86FFAF",
+      "list.inactiveSelectionBackground": "#205C57",
+      "list.highlightForeground": "#86FFAF",
+      "pickerGroup.foreground": "#86FFAF",
+      "tab.activeBorderTop": "#86FFAF",
+      "editorSuggestWidget.highlightForeground": "#86FFAF",
+      "inputOption.activeBorder": "#86FFAF",
+      "gitDecoration.addedResourceForeground": "#49FF6D",
+
+      "terminal.background": "#0C1C25",
+      "terminal.foreground": "#86FFAF",
+      "terminalCursor.foreground": "#86FFAF",
+      "terminalCursor.background": "#0C1C25",
+      "terminal.ansiBlack": "#152535",
+      "terminal.ansiRed": "#FF3C3C",
+      "terminal.ansiGreen": "#49FF6D",
+      "terminal.ansiYellow": "#FFBC51",
+      "terminal.ansiBlue": "#3DB6F9",
+      "terminal.ansiMagenta": "#8E44AD",
+      "terminal.ansiCyan": "#16A085",
+      "terminal.ansiWhite": "#BDC3C7",
+      "terminal.ansiBrightBlack": "#26384B",
+      "terminal.ansiBrightRed": "#FF3C4C",
+      "terminal.ansiBrightGreen": "#93FF91",
+      "terminal.ansiBrightYellow": "#FFD057",
+      "terminal.ansiBrightBlue": "#5BD7FF",
+      "terminal.ansiBrightMagenta": "#9B59B6",
+      "terminal.ansiBrightCyan": "#205C57",
+      "terminal.ansiBrightWhite": "#FFFFFF"
+    }
+  },
 
   "[dart]": {
     "editor.formatOnSave": true,
