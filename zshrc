@@ -82,6 +82,12 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
 source "$ZSH/oh-my-zsh.sh"
 
+# Autosuggestion text color. Default (fg=8) maps to the terminal palette's
+# "bright black" slot, which is a dark navy in the Pixegami palette and
+# nearly invisible against the background. Pin to a real 256-color grey
+# (232-255 grayscale ramp isn't touched by custom 16-color palettes) instead.
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
+
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -126,7 +132,7 @@ command -v fdfind >/dev/null && alias fd="fdfind"
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)" && alias cd="z"
 [[ -f /usr/share/fzf/shell/key-bindings.zsh ]] && source /usr/share/fzf/shell/key-bindings.zsh
 [[ -f /usr/share/fzf/shell/completion.zsh ]] && source /usr/share/fzf/shell/completion.zsh
-command -v fastfetch >/dev/null && [[ $- == *i* ]] && fastfetch
+command -v fastfetch >/dev/null && alias sysinfo="fastfetch"
 
 
 export NVM_DIR="$HOME/.nvm"

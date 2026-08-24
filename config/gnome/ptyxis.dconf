@@ -1,0 +1,16 @@
+[/]
+default-profile-uuid='d141cca41c65ca807d4122aa69e1ea5e'
+font-name='MesloLGS NF 10'
+profile-uuids=['d141cca41c65ca807d4122aa69e1ea5e']
+restore-session=false
+use-system-font=false
+window-size=(uint32 238, uint32 52)
+
+[Profiles/d141cca41c65ca807d4122aa69e1ea5e]
+bold-is-bright=true
+custom-command='zsh'
+font-name='FiraCode Nerd Font Mono 10'
+login-shell=true
+palette='Pixegami'
+use-custom-command=true
+use-custom-font=true
