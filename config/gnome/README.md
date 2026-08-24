@@ -32,7 +32,7 @@ Built from https://github.com/ful1e5/Bibata_Cursor source SVGs using their
     "out": "bitmaps/Bibata-Modern-Pixegami",
     "colors": [
       { "match": "#00FF00", "replace": "#86FFAF" },
-      { "match": "#0000FF", "replace": "#FFFFFF" },
+      { "match": "#0000FF", "replace": "#0C1C25" },
       { "match": "#FF0000", "replace": "#0C1C25" }
     ]
   }
