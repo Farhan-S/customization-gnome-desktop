@@ -21,9 +21,45 @@ Snapshot of desktop settings, taken 2026-08-24. To restore on a fresh install:
    `interface.dconf` already sets `cursor-theme='Bibata-Modern-Pixegami'`.
 7. Install the recolored + repaired Dracula GTK theme:
    `cp -r themes/Dracula ~/.themes/Dracula`
-   `interface.dconf` already sets `gtk-theme='Dracula'`. GTK4 apps additionally
-   need `~/.config/environment.d/gtk-theme.conf` (`GTK_THEME=Dracula`) - see
-   `environment.d/` in this backup.
+   `interface.dconf` already sets `gtk-theme='Dracula'`, which is all GTK3
+   apps need. Do **not** set `GTK_THEME=Dracula` - see "GTK4 / libadwaita" below.
+8. Link the GTK stylesheets:
+   ```
+   mkdir -p ~/.config/gtk-4.0 ~/.config/gtk-3.0
+   ln -sf ~/.dotfiles/config/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css
+   ln -sf ~/.dotfiles/config/gtk-3.0/gtk.css ~/.config/gtk-3.0/gtk.css
+   ```
+
+## GTK4 / libadwaita theming
+
+GTK4 apps (Files, Settings, and most of GNOME now) are libadwaita apps, and
+libadwaita does **not** read `~/.themes/<name>/gtk-4.0/` for its colors. Two
+consequences, both learned the hard way on 2026-08-28:
+
+* `GTK_THEME=Dracula` in `environment.d/` *did* force Dracula's GTK4 sheet onto
+  libadwaita apps - but it also makes libadwaita **ignore color overrides from
+  `~/.config/gtk-4.0/gtk.css`**. Named colors (`window_bg_color`,
+  `headerbar_bg_color`, `card_bg_color`, ...) silently fall back to stock
+  Adwaita values. Verified by rendering the same window with and without the
+  variable: with it, the window background came out `#353535`; without it,
+  `#282a36` as intended. The variable is now removed.
+* Dracula's own `gtk-4.0/gtk.css` is a 2.1 MB single-line web-CSS port. It
+  defines none of libadwaita's named colors and does not parse - it uses
+  `filter: brightness()`, which is not a GTK property. It is parked here as
+  `themes/Dracula/gtk-4.0.disabled` so GTK4 falls back to Adwaita, which
+  `config/gtk-4.0/gtk.css` then restyles properly.
+
+`config/gtk-4.0/gtk.css` is the real GTK4 theme: full Dracula palette mapped
+onto libadwaita's named colors (written both as `@define-color` and as `:root`
+custom properties so it survives the deprecation), 14px window radius, and
+roomier metrics throughout. Note that libadwaita resolves the *accent* at
+runtime from `org.gnome.desktop.interface accent-color`, which beats the CSS
+variables - so accent-driven widgets (switches, checks, level bars) pin
+`#86ffaf` explicitly.
+
+Window-control buttons deliberately have **no** size override. They expand to
+the header bar's height, so a `min-height` + `border-radius: 999px` there
+produced an oversized disc on hover; libadwaita already sizes them correctly.
 
 ## Dracula theme repair notes
 

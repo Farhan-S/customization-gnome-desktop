@@ -1,0 +1,464 @@
+/* ==========================================================================
+   Dracula (green accent) for libadwaita / GTK4  —  Fedora 44 / GNOME 50
+   Palette matched to ~/.themes/Dracula so GTK3 + GTK4 apps agree.
+   Tweak the values in the PALETTE / METRICS blocks; everything else follows.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- PALETTE */
+/* Accent is Pixegami mint #86ffaf - the same value used for the Dracula
+   $purple recolor and the Bibata-Modern-Pixegami cursor, so the desktop
+   reads as one palette. Dracula core: bg #282a36 darker #21222c fg #f8f8f2
+                  green #86ffaf  purple #bd93f9  pink #ff79c6
+                  red #ff5555  orange #ffb86c  yellow #f1fa8c  cyan #8be9fd */
+
+@define-color accent_bg_color        #86ffaf;
+@define-color accent_fg_color        #1b1c24;
+@define-color accent_color           #86ffaf;
+
+@define-color destructive_bg_color   #ff5555;
+@define-color destructive_fg_color   #1b1c24;
+@define-color destructive_color      #ff7b7b;
+
+@define-color success_bg_color       #86ffaf;
+@define-color success_fg_color       #1b1c24;
+@define-color success_color          #86ffaf;
+
+@define-color warning_bg_color       #ffb86c;
+@define-color warning_fg_color       #1b1c24;
+@define-color warning_color          #ffc98d;
+
+@define-color error_bg_color         #ff5555;
+@define-color error_fg_color         #1b1c24;
+@define-color error_color            #ff7b7b;
+
+@define-color window_bg_color        #282a36;
+@define-color window_fg_color        #f8f8f2;
+
+@define-color view_bg_color          #282a36;
+@define-color view_fg_color          #f8f8f2;
+
+@define-color headerbar_bg_color     #21222c;
+@define-color headerbar_fg_color     #f8f8f2;
+@define-color headerbar_border_color #f8f8f2;
+@define-color headerbar_backdrop_color        #232430;
+@define-color headerbar_shade_color           rgba(0, 0, 0, 0.36);
+@define-color headerbar_darker_shade_color    rgba(0, 0, 0, 0.42);
+
+@define-color sidebar_bg_color       #21222c;
+@define-color sidebar_fg_color       #f8f8f2;
+@define-color sidebar_backdrop_color #232430;
+@define-color sidebar_shade_color    rgba(0, 0, 0, 0.30);
+@define-color sidebar_border_color   rgba(0, 0, 0, 0.42);
+
+@define-color secondary_sidebar_bg_color       #23242f;
+@define-color secondary_sidebar_fg_color       #f8f8f2;
+@define-color secondary_sidebar_backdrop_color #24252f;
+@define-color secondary_sidebar_shade_color    rgba(0, 0, 0, 0.28);
+@define-color secondary_sidebar_border_color   rgba(0, 0, 0, 0.40);
+
+@define-color card_bg_color          #323544;
+@define-color card_fg_color          #f8f8f2;
+@define-color card_shade_color       rgba(0, 0, 0, 0.34);
+
+@define-color dialog_bg_color        #2d303e;
+@define-color dialog_fg_color        #f8f8f2;
+
+@define-color popover_bg_color       #323544;
+@define-color popover_fg_color       #f8f8f2;
+@define-color popover_shade_color    rgba(0, 0, 0, 0.34);
+
+@define-color thumbnail_bg_color     #323544;
+@define-color thumbnail_fg_color     #f8f8f2;
+
+@define-color shade_color            rgba(0, 0, 0, 0.34);
+@define-color scrollbar_outline_color rgba(0, 0, 0, 0.55);
+
+/* libadwaita >= 1.6 reads these as CSS custom properties; keep both in sync
+   so the theme survives the @define-color deprecation. */
+:root {
+  --accent-bg-color:      #86ffaf;
+  --accent-fg-color:      #1b1c24;
+  --accent-color:         #86ffaf;
+  --destructive-bg-color: #ff5555;
+  --destructive-color:    #ff7b7b;
+  --success-bg-color:     #86ffaf;
+  --success-color:        #86ffaf;
+  --warning-bg-color:     #ffb86c;
+  --warning-color:        #ffc98d;
+  --error-bg-color:       #ff5555;
+  --error-color:          #ff7b7b;
+
+  --window-bg-color:      #282a36;
+  --window-fg-color:      #f8f8f2;
+  --view-bg-color:        #282a36;
+  --view-fg-color:        #f8f8f2;
+  --headerbar-bg-color:   #21222c;
+  --headerbar-fg-color:   #f8f8f2;
+  --sidebar-bg-color:     #21222c;
+  --sidebar-fg-color:     #f8f8f2;
+  --secondary-sidebar-bg-color: #23242f;
+  --card-bg-color:        #323544;
+  --dialog-bg-color:      #2d303e;
+  --popover-bg-color:     #323544;
+  --thumbnail-bg-color:   #323544;
+
+  /* ------------------------------------------------------------- METRICS */
+  --win-radius:  14px;   /* window + titlebar corners */
+  --big-radius:  14px;   /* cards, popovers, boxed lists */
+  --mid-radius:  10px;   /* buttons, entries, sidebar rows */
+  --row-height:  40px;   /* sidebar / menu row height */
+  --list-height: 48px;   /* Settings preference row height */
+}
+
+/* =================================================== WINDOW + TITLE BAR == */
+
+window.csd {
+  border-radius: 14px;
+}
+
+/* Only the window's own title bar rounds; libadwaita already handles the
+   corners of headerbars nested inside split views / toolbar views. */
+window.csd > .titlebar:not(headerbar) {
+  border-top-left-radius:  14px;
+  border-top-right-radius: 14px;
+}
+
+/* Roomier bar: taller, with real padding at the ends. */
+headerbar,
+.titlebar:not(headerbar) {
+  /* Pinned explicitly: libadwaita's AdwToolbarView draws flat header bars that
+     inherit the window background, so the headerbar_bg_color above alone would
+     leave the bar indistinguishable from the content. */
+  background-color: #21222c;
+  color: #f8f8f2;
+  min-height: 48px;
+  padding-left:  6px;
+  padding-right: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.34);
+}
+
+headerbar:backdrop { background-color: #232430; }
+
+headerbar .title {
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+headerbar .subtitle { opacity: 0.66; }
+
+/* One size for every control in the bar. The generic `button` rule further
+   down uses text-button padding, which made icon-only buttons far too wide,
+   so header-bar buttons are pinned to a square footprint here. */
+headerbar button,
+headerbar menubutton > button,
+headerbar splitbutton > button,
+.titlebar button {
+  min-height: 32px;
+  min-width:  32px;
+  padding: 0 8px;
+  margin: 0 1px;
+}
+
+/* Icon-only buttons stay square instead of stretching to text width. */
+headerbar button.image-button,
+headerbar menubutton.image-button > button,
+headerbar button.toggle:not(.text-button) {
+  min-width: 32px;
+  padding: 0;
+}
+
+/* Linked groups (back/forward) must not be pulled apart by margins. */
+headerbar .linked > button,
+headerbar .linked > menubutton > button { margin: 0; }
+
+/* Normalise symbolic icon sizes so the bar reads as one set. */
+headerbar button image,
+headerbar menubutton image { -gtk-icon-size: 16px; }
+
+/* Window controls: sizing is deliberately NOT overridden. These buttons
+   expand to the bar's height, so a min-size + radius here produced an
+   oversized disc on hover. libadwaita already sizes them correctly. */
+
+/* The path-bar / title pill in Files. */
+headerbar .linked > button,
+.path-bar-box,
+pathbar {
+  border-radius: 10px;
+}
+
+/* ============================================================ SIDEBARS == */
+/* The Files places list: this is the tight one in the screenshot. */
+
+.navigation-sidebar {
+  padding: 8px 6px;
+  background-color: #21222c;
+}
+
+.navigation-sidebar > row,
+.navigation-sidebar row.sidebar-row {
+  min-height: 40px;
+  padding: 4px 10px;
+  margin: 2px 4px;
+  border-radius: 10px;
+}
+
+.navigation-sidebar > row:selected,
+.navigation-sidebar row.sidebar-row:selected {
+  background-color: alpha(#86ffaf, 0.18);
+  color: #86ffaf;
+  font-weight: 700;
+}
+
+.navigation-sidebar > row:hover {
+  background-color: alpha(#f8f8f2, 0.07);
+}
+
+/* Gap between icon and label in sidebar rows. */
+.navigation-sidebar > row image { margin-right: 4px; }
+
+/* Section headings inside the sidebar. */
+.navigation-sidebar > row.has-open-popup,
+.navigation-sidebar label.dim-label { padding: 2px 0; }
+
+/* ======================================= FILE MANAGER CONTENT AREA ====== */
+/* Icon grid: give every tile padding so labels stop colliding. */
+
+gridview {
+  padding: 10px;
+}
+
+gridview > child {
+  padding: 8px 6px;
+  margin: 3px;
+  border-radius: 12px;
+}
+
+gridview > child:hover {
+  background-color: alpha(#f8f8f2, 0.09);
+}
+
+gridview > child:selected {
+  background-color: alpha(#86ffaf, 0.18);
+}
+
+gridview > child:selected:hover {
+  background-color: alpha(#86ffaf, 0.26);
+}
+
+/* List / column view rows. */
+columnview > listview > row,
+listview.view > row {
+  min-height: 38px;
+  padding: 2px 4px;
+}
+
+columnview > listview > row:hover,
+listview.view > row:hover {
+  background-color: alpha(#f8f8f2, 0.07);
+}
+
+columnview > listview > row:selected,
+listview.view > row:selected {
+  background-color: alpha(#86ffaf, 0.18);
+}
+
+columnview > header > button {
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+/* Nautilus floating status bar ("… selected"). */
+.floating-bar {
+  padding: 6px 12px;
+  margin: 8px;
+  border-radius: 999px;
+  background-color: #323544;
+}
+
+/* ===================================== SETTINGS / PREFERENCE WINDOWS ==== */
+
+preferencespage > scrolledwindow > viewport > clamp {
+  margin: 12px 0;
+}
+
+preferencesgroup,
+.preferences-group {
+  margin-bottom: 20px;
+}
+
+preferencesgroup > box > label,
+.preferences-group > box > label {
+  margin-bottom: 6px;
+}
+
+/* The rounded row lists that make up most of Settings. */
+.boxed-list,
+list.boxed-list {
+  border-radius: 14px;
+}
+
+.boxed-list > row,
+list.boxed-list > row,
+row.expander,
+row.entry,
+row.combo,
+row.spin,
+row.button {
+  min-height: 48px;
+  padding: 6px 4px;
+}
+
+/* AdwActionRow / AdwPreferencesRow inner box — the real padding lever. */
+row > box.header,
+row.activatable > box,
+.boxed-list > row > box {
+  margin: 2px 6px;
+}
+
+row .title  { margin-bottom: 1px; }
+row .subtitle { opacity: 0.66; margin-top: 1px; }
+
+/* Settings' own navigation list. */
+.navigation-sidebar row.sidebar-row .title { font-weight: 500; }
+
+/* ============================================================ WIDGETS == */
+
+button,
+button.toggle,
+splitbutton > button,
+menubutton > button {
+  min-height: 32px;
+  padding: 4px 14px;
+  border-radius: 10px;
+}
+
+button.circular,
+button.image-button:not(.flat) {
+  min-width: 32px;
+  padding: 4px;
+}
+
+button.suggested-action {
+  background-color: #86ffaf;
+  color: #1b1c24;
+  font-weight: 700;
+}
+
+button.destructive-action {
+  background-color: #ff5555;
+  color: #1b1c24;
+  font-weight: 700;
+}
+
+entry,
+.entry,
+spinbutton,
+searchbar entry,
+entry.search {
+  min-height: 34px;
+  padding: 4px 12px;
+  border-radius: 10px;
+}
+
+entry:focus-within,
+.entry:focus-within {
+  outline: 2px solid alpha(#86ffaf, 0.55);
+  outline-offset: -2px;
+}
+
+/* ---------------------------------------------------------- POPOVERS -- */
+
+popover > contents,
+popover.background > contents {
+  padding: 8px;
+  border-radius: 14px;
+  background-color: #323544;
+}
+
+popover.menu > contents { padding: 6px; }
+
+popover.menu modelbutton,
+popover modelbutton {
+  min-height: 34px;
+  padding: 4px 10px;
+  margin: 1px 0;
+  border-radius: 8px;
+}
+
+popover.menu modelbutton:hover {
+  background-color: alpha(#86ffaf, 0.16);
+}
+
+popover separator { margin: 5px 4px; }
+
+/* ------------------------------------------------------------- CARDS -- */
+
+.card,
+.osd,
+.app-notification {
+  border-radius: 14px;
+}
+
+.card { padding: 4px; }
+
+/* -------------------------------------------------------- TABS/VIEWS -- */
+
+.toolbar { padding: 6px; }
+.toolbar > * { margin: 0 2px; }
+
+notebook > header tab,
+tabbar tabbox > tab {
+  min-height: 34px;
+  padding: 4px 14px;
+  border-radius: 9px 9px 0 0;
+}
+
+stackswitcher > button { min-height: 34px; padding: 4px 16px; }
+
+/* -------------------------------------------------------- SCROLLBARS -- */
+
+scrollbar { background-color: transparent; border: none; }
+
+scrollbar slider {
+  min-width:  9px;
+  min-height: 9px;
+  margin: 3px;
+  border-radius: 999px;
+  background-color: alpha(#f8f8f2, 0.26);
+}
+
+scrollbar slider:hover  { background-color: alpha(#f8f8f2, 0.42); }
+scrollbar slider:active { background-color: #86ffaf; }
+
+/* ----------------------------------------------------------- MISC ----- */
+
+tooltip {
+  border-radius: 10px;
+  padding: 4px;
+  background-color: #21222c;
+}
+
+check, radio { min-width: 18px; min-height: 18px; }
+
+/* Sizing is left to libadwaita (overriding it made the knob overflow the
+   track). Colour is pinned because libadwaita resolves the accent at runtime
+   from the system setting, which beats the CSS variables above. */
+switch:checked { background-color: #86ffaf; }
+switch:checked > slider { background-color: #f8f8f2; }
+
+check:checked, check:indeterminate,
+radio:checked, radio:indeterminate {
+  background-color: #86ffaf;
+  color: #1b1c24;
+}
+
+levelbar block.filled { background-color: #86ffaf; }
+
+progressbar > trough > progress { background-color: #86ffaf; }
+
+selection,
+:selected { background-color: alpha(#86ffaf, 0.30); }
+
+.dim-label { opacity: 0.62; }
+
+separator { background-color: rgba(0, 0, 0, 0.34); }
