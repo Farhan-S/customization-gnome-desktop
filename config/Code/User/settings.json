@@ -195,6 +195,116 @@
     }
   },
 
+  "editor.tokenColorCustomizations": {
+    "[Catppuccin Mocha]": {
+      "textMateRules": [
+        {
+          "name": "italic: language vocabulary (comments, keywords, storage)",
+          "scope": [
+            "comment",
+            "keyword",
+            "storage",
+            "markup.italic",
+            "punctuation.definition.comment"
+          ],
+          "settings": {
+            "fontStyle": "italic"
+          }
+        },
+        {
+          "name": "italic: vocabulary the theme flattens (derived from theme)",
+          "scope": [
+            "keyword",
+            "storage.type",
+            "storage.modifier",
+            "comment.block.documentation variable.other",
+            "storage.type.module.rust",
+            "storage.modifier.rust",
+            "storage.type.struct.rust",
+            "storage.type.enum.rust",
+            "storage.type.trait.rust",
+            "storage.type.union.rust",
+            "storage.type.impl.rust",
+            "storage.type.rust",
+            "storage.type.function.rust",
+            "storage.type.type.rust"
+          ],
+          "settings": {
+            "fontStyle": "italic"
+          }
+        },
+        {
+          "name": "upright: identifiers the theme italicises (derived from theme)",
+          "scope": [
+            "entity.name.function",
+            "meta.function-call.method",
+            "support.function",
+            "support.function.misc",
+            "variable.function",
+            "entity.name.class",
+            "entity.other.inherited-class",
+            "support.class",
+            "meta.function-call.constructor",
+            "entity.name.struct",
+            "entity.name.enum",
+            "meta.type",
+            "meta.type-alias",
+            "support.type",
+            "entity.name.type",
+            "variable.parameter",
+            "meta.function.parameters",
+            "variable.other.member.haskell",
+            "variable.other.member.definition.haskell",
+            "punctuation.decorator.ts",
+            "support.function.macro.julia",
+            "support.function.magic.python",
+            "variable.parameter.function.language.special.self.python",
+            "variable.language.special.self.python",
+            "entity.name.function.decorator.python",
+            "punctuation.definition.decorator.python",
+            "meta.indexed-name.python",
+            "meta.item-access.python",
+            "meta.annotation.rust",
+            "meta.annotation.rust punctuation",
+            "meta.attribute.rust",
+            "punctuation.definition.attribute.rust",
+            "entity.name.impl.rust",
+            "entity.name.trait.rust",
+            "support.macro.rust",
+            "meta.macro.rust support.function.rust",
+            "entity.name.function.macro.rust",
+            "entity.name.type.lifetime",
+            "meta.string meta.interpolation.parameter.shell variable.other.readwrite"
+          ],
+          "settings": {
+            "fontStyle": ""
+          }
+        },
+        {
+          "name": "upright: symbolic operators and primitive types",
+          "scope": [
+            "keyword.operator",
+            "storage.type.primitive"
+          ],
+          "settings": {
+            "fontStyle": ""
+          }
+        },
+        {
+          "name": "italic: word operators (and, or, in, is, new, typeof, await)",
+          "scope": [
+            "keyword.operator.word",
+            "keyword.operator.new",
+            "keyword.operator.expression"
+          ],
+          "settings": {
+            "fontStyle": "italic"
+          }
+        }
+      ]
+    }
+  },
+
   "[dart]": {
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
