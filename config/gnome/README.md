@@ -1,29 +1,29 @@
 # GNOME / Ptyxis restore
 
-Snapshot of desktop settings, taken 2026-08-24. To restore on a fresh install:
+Snapshot of desktop settings, taken 2026-08-24.
+
+To restore on a fresh install:
 
 1. Install the extensions listed in `enabled-extensions.txt` from
    https://extensions.gnome.org (search by name) or via their UUIDs.
-2. Import the terminal palette:
-   `ptyxis --import-palette Pixegami.palette`
-3. Load the saved settings:
-   ```
-   dconf load /org/gnome/shell/extensions/ < extensions-settings.dconf
-   dconf load /org/gnome/Ptyxis/ < ptyxis.dconf
-   dconf load /org/gnome/desktop/interface/ < interface.dconf
-   ```
-4. Set the font/palette on the Ptyxis profile if `ptyxis.dconf` doesn't
+2. Run `./restore.sh` from this directory. It imports the terminal palette,
+   loads the saved dconf settings, and enables the extensions - installing
+   zsh first if it's missing, since `ptyxis.dconf` pins the Ptyxis profile's
+   custom-command to `zsh` and loading it before zsh exists leaves Ptyxis
+   unable to open at all (`Failed to find executable zsh: No such file or
+   directory`), with no other terminal around to fix it from. (Already hit
+   this? Switch to a TTY with Ctrl+Alt+F3, log in, `sudo apt install -y zsh`,
+   then `chsh -s /usr/bin/zsh && sudo reboot`.)
+3. Set the font/palette on the Ptyxis profile if `ptyxis.dconf` doesn't
    already carry it (font: FiraCode Nerd Font Mono 10).
-5. Enable the extensions:
-   `gsettings set org.gnome.shell enabled-extensions "$(cat enabled-extensions.txt | head -1)"`
-6. Install the custom cursor theme (built from ful1e5/Bibata_Cursor source,
+4. Install the custom cursor theme (built from ful1e5/Bibata_Cursor source,
    not available anywhere else): `cp -r cursors/Bibata-Modern-Pixegami ~/.icons/`
    `interface.dconf` already sets `cursor-theme='Bibata-Modern-Pixegami'`.
-7. Install the recolored + repaired Dracula GTK theme:
+5. Install the recolored + repaired Dracula GTK theme:
    `cp -r themes/Dracula ~/.themes/Dracula`
    `interface.dconf` already sets `gtk-theme='Dracula'`, which is all GTK3
    apps need. Do **not** set `GTK_THEME=Dracula` - see "GTK4 / libadwaita" below.
-8. Link the GTK stylesheets:
+6. Link the GTK stylesheets:
    ```
    mkdir -p ~/.config/gtk-4.0 ~/.config/gtk-3.0
    ln -sf ~/.dotfiles/config/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css
