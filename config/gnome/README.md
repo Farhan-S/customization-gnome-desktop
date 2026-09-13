@@ -2,6 +2,11 @@
 
 Snapshot of desktop settings, taken 2026-08-24.
 
+Run `../fonts/install.sh` first - `ptyxis.dconf` and `interface.dconf` below
+reference fonts (MesloLGS NF, Fira Code iScript, FiraCode Nerd Font Mono,
+Comfortaa) by name only, and GNOME/Ptyxis fall back to a default font
+silently instead of erroring when one is missing.
+
 To restore on a fresh install:
 
 1. Install the extensions listed in `enabled-extensions.txt` from
