@@ -2,6 +2,23 @@
 
 Snapshot of desktop settings, taken 2026-08-24.
 
+**Do not (re-)install `live-lockscreen@nick-redwill`.** It's still installed
+locally (not removed, just disabled) but deliberately left out of
+`enabled-extensions.txt` after it was identified as the cause of a
+freeze-until-hard-restart bug: on lock, it spawns an external mpv/GStreamer
+subprocess per monitor and injects it into `Main.screenShield._dialog` via
+private-API monkeypatching (`InjectionManager.overrideMethod`), racing that
+subprocess's window-map against the shield's own lock animation. Under heavy
+CPU/GPU load (e.g. many containers/services running) that race is lost often
+enough that the shield's modal input grab stays engaged while the injected
+dialog/background never finishes - only the top panel (a separate actor layer
+above the shield) stays responsive, and nothing but a hard restart releases
+the grab. Reproduced on a fresh Ubuntu install with only this extension
+bundle applied. `blur-my-shell` and `burn-my-windows` also hook lock/unlock
+transitions and add GPU shader work at the same moment, but neither spawns a
+subprocess or patches the shield's dialog, so they're contributing GPU load
+at worst, not the trigger.
+
 Run `../fonts/install.sh` first - `ptyxis.dconf` and `interface.dconf` below
 reference fonts (MesloLGS NF, Fira Code iScript, FiraCode Nerd Font Mono,
 Comfortaa) by name only, and GNOME/Ptyxis fall back to a default font
