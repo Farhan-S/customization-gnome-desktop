@@ -25,14 +25,21 @@ its own value so the shapes separate by contrast rather than by outline:
 
 | surface                | colour    | why                                  |
 |------------------------|-----------|--------------------------------------|
-| window frame           | `#08151D` | deepest, so the tab strip recedes    |
-| inactive tabs          | `#0A1820` | a hair above the frame               |
-| toolbar + active tab   | `#0C1C25` | the identity colour, the main plane  |
-| omnibox / buttons      | `#152535` | lightest, so the pill lifts forward  |
+| window frame           | `#050E14` | deepest, so the tab strip recedes    |
+| inactive tabs          | `#071118` | sit flush with the frame             |
+| toolbar + active tab   | `#162E3B` | clearly lifted, so the selected tab pops |
+| omnibox / buttons      | `#223E4F` | lightest, so the pill lifts forward  |
 | accent                 | `#86FFAF` | icons, links, focus ring only        |
 
 Text is soft white (`#E8F4F0`) rather than mint. Mint stays an accent - used on
-icons, links and the focus ring - which is what keeps it from reading as loud.
+icons, links, the focus ring and the **selected tab's title** - which is what
+keeps it from reading as loud. Inactive tab titles are a muted grey-blue, so the
+selected tab is marked twice: by a lighter surface and by mint text.
+
+The active tab is painted in the toolbar colour and inactive tabs sit on the
+frame, so the toolbar/frame gap *is* the selected-tab indicator. Keep it wide;
+at a few RGB steps apart (as in v2.0) you cannot tell which tab is selected.
+
 If you want the old all-mint text back, set `tab_text`, `toolbar_text` and
 `omnibox_text` to `[134, 255, 175]`.
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pixegami Theme",
-  "version": "2.0",
+  "version": "2.1",
   "description": "Navy/mint theme on the Pixegami palette (#0C1C25 / #86FFAF), with a hatched texture and layered depth so Chrome's capsule tabs and pill omnibox read clearly.",
   "theme": {
     "images": {
@@ -15,16 +15,16 @@
     },
 
     "colors": {
-      "frame": [8, 21, 29],
-      "frame_inactive": [10, 23, 31],
-      "frame_incognito": [6, 16, 22],
-      "frame_incognito_inactive": [8, 19, 26],
+      "frame": [5, 14, 20],
+      "frame_inactive": [8, 18, 25],
+      "frame_incognito": [3, 10, 15],
+      "frame_incognito_inactive": [6, 14, 20],
 
-      "toolbar": [12, 28, 37],
-      "button_background": [21, 37, 53],
+      "toolbar": [22, 46, 59],
+      "button_background": [34, 62, 79],
 
-      "tab_text": [232, 244, 240],
-      "tab_background_text": [138, 158, 170],
+      "tab_text": [134, 255, 175],
+      "tab_background_text": [120, 140, 152],
       "tab_background_text_inactive": [104, 122, 133],
       "tab_background_text_incognito": [138, 158, 170],
       "tab_background_text_incognito_inactive": [104, 122, 133],
@@ -34,7 +34,7 @@
       "bookmark_text": [190, 208, 214],
       "focus_ring": [134, 255, 175],
 
-      "omnibox_background": [21, 37, 53],
+      "omnibox_background": [34, 62, 79],
       "omnibox_text": [232, 244, 240],
 
       "ntp_background": [12, 28, 37],

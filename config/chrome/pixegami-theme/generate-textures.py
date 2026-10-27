@@ -25,10 +25,11 @@ MINT = (134, 255, 175)
 
 # Value layers. Each surface sits a step lighter than the one behind it, which
 # is what makes Chrome's capsule tabs and pill omnibox read as distinct shapes.
-FRAME =          (8, 21, 29)     # #08151D  deepest - window frame
-FRAME_INACTIVE = (10, 23, 31)    # #0A171F  unfocused window
-TAB_BACKGROUND = (10, 24, 32)    # #0A1820  inactive tabs, sit on the frame
-TOOLBAR =        (12, 28, 37)    # #0C1C25  toolbar + active tab
+FRAME =          (5, 14, 20)     # #050E14  deepest - window frame
+FRAME_INACTIVE = (8, 18, 25)     # #081219  unfocused window
+TAB_BACKGROUND = (7, 17, 24)     # #071118  inactive tabs, sit on the frame
+TOOLBAR =        (22, 46, 59)    # #162E3B  toolbar + active tab - must stand
+                                 # clearly off the frame or the selected tab vanishes
 NTP =            (12, 28, 37)    # #0C1C25  new tab page
 
 HATCH_SPACING = 8                # px between diagonal lines
