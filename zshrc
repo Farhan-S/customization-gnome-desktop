@@ -134,6 +134,12 @@ command -v zoxide >/dev/null && eval "$(zoxide init zsh)" && alias cd="z"
 [[ -f /usr/share/fzf/shell/completion.zsh ]] && source /usr/share/fzf/shell/completion.zsh
 command -v fastfetch >/dev/null && alias sysinfo="fastfetch"
 
+# --- kormi scripts ---
+alias kormi-pull="/home/farhan/projects/kormi/kormi-infrastructure/scripts/git-pull.sh"
+alias kormi-push="/home/farhan/projects/kormi/kormi-infrastructure/scripts/git-push.sh"
+alias kormi-dev="/home/farhan/projects/kormi/kormi-infrastructure/scripts/dev.sh"
+alias kormi-down="/home/farhan/projects/kormi/kormi-infrastructure/scripts/dev-down.sh"
+
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -151,3 +157,12 @@ export SDKMAN_DIR="$HOME/.sdkman"
 
 # kimi-code
 export PATH="/home/farhan/.kimi-code/bin:$PATH"
+
+# bun completions
+[ -s "/home/farhan/.bun/_bun" ] && source "/home/farhan/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+export PATH="$HOME/.npm-global/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"
