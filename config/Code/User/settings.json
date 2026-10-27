@@ -191,8 +191,8 @@
       "terminal.ansiBrightBlue": "#5BD7FF",
       "terminal.ansiBrightMagenta": "#9B59B6",
       "terminal.ansiBrightCyan": "#205C57",
-      "terminal.ansiBrightWhite": "#FFFFFF"
-    }
+      "terminal.ansiBrightWhite": "#FFFFFF",
+    },
   },
 
   "editor.tokenColorCustomizations": {
@@ -205,11 +205,11 @@
             "keyword",
             "storage",
             "markup.italic",
-            "punctuation.definition.comment"
+            "punctuation.definition.comment",
           ],
           "settings": {
-            "fontStyle": "italic"
-          }
+            "fontStyle": "italic",
+          },
         },
         {
           "name": "italic: vocabulary the theme flattens (derived from theme)",
@@ -227,11 +227,11 @@
             "storage.type.impl.rust",
             "storage.type.rust",
             "storage.type.function.rust",
-            "storage.type.type.rust"
+            "storage.type.type.rust",
           ],
           "settings": {
-            "fontStyle": "italic"
-          }
+            "fontStyle": "italic",
+          },
         },
         {
           "name": "upright: identifiers the theme italicises (derived from theme)",
@@ -274,43 +274,42 @@
             "meta.macro.rust support.function.rust",
             "entity.name.function.macro.rust",
             "entity.name.type.lifetime",
-            "meta.string meta.interpolation.parameter.shell variable.other.readwrite"
+            "meta.string meta.interpolation.parameter.shell variable.other.readwrite",
           ],
           "settings": {
-            "fontStyle": ""
-          }
+            "fontStyle": "",
+          },
         },
         {
           "name": "upright: symbolic operators and primitive types",
-          "scope": [
-            "keyword.operator",
-            "storage.type.primitive"
-          ],
+          "scope": ["keyword.operator", "storage.type.primitive"],
           "settings": {
-            "fontStyle": ""
-          }
+            "fontStyle": "",
+          },
         },
         {
           "name": "italic: word operators (and, or, in, is, new, typeof, await)",
           "scope": [
             "keyword.operator.word",
             "keyword.operator.new",
-            "keyword.operator.expression"
+            "keyword.operator.expression",
           ],
           "settings": {
-            "fontStyle": "italic"
-          }
-        }
-      ]
-    }
+            "fontStyle": "italic",
+          },
+        },
+      ],
+    },
   },
 
   "[dart]": {
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
-    "editor.rulers": [80]
+    "editor.rulers": [80],
   },
   "[java]": {
-    "editor.formatOnSave": true
-  }
+    "editor.formatOnSave": true,
+  },
+  "claudeCode.preferredLocation": "panel",
+  "dart.openDevTools": "flutter",
 }
