@@ -39,6 +39,10 @@ the principle. Re-run after a theme update; the list re-derives itself.
     python3 config/Code/generate-italics.py [--dry-run]
 """
 
+import utils.clients
+import utils.http_session
+import utils.transport
+import utils.session
 import json
 import re
 import sys
