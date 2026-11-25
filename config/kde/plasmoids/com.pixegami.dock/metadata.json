@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Id": "com.pixegami.dock",
+        "Name": "Pixegami Dock",
+        "Description": "macOS-style dock with zoom on hover, in the Pixegami navy/mint palette",
+        "Icon": "preferences-desktop-icons",
+        "Category": "Windows and Tasks",
+        "License": "GPL-2.0+",
+        "Version": "1.0",
+        "Authors": [ { "Name": "Farhan" } ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

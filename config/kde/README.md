@@ -26,3 +26,18 @@ Copies of the Plasma panel, KWin, global and Dolphin config as they were on
 cp snapshot-2026-11-25/plasma-org.kde.plasma.desktop-appletsrc snapshot-2026-11-25/plasmashellrc ~/.config/
 systemctl --user restart plasma-plasmashell.service
 ```
+
+## Pixegami Dock (`plasmoids/com.pixegami.dock`)
+
+A Plasma 6 widget written in QML: a macOS-style dock with zoom on hover, in the
+Pixegami palette. It sits in the bottom panel (panel 209), which is 140px tall,
+auto-hides, and has its background hidden by the widget so only the dock bar
+shows; the empty space above the bar is room for the zoomed icons.
+
+- Left click: open / focus / minimize; on an app with several windows, cycles them.
+- Middle click: new window. Right click: New Window, Pin/Unpin, Close.
+- Settings in `contents/config/main.xml`: `iconSize` (48), `maxZoom` (1.8).
+
+Install: `ln -sfn ~/.dotfiles/config/kde/plasmoids/com.pixegami.dock ~/.local/share/plasma/plasmoids/`
+then add "Pixegami Dock" to a bottom panel. After editing the QML, run
+`systemctl --user restart plasma-plasmashell.service` to reload it.
