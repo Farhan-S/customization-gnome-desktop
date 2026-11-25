@@ -83,6 +83,12 @@ user@host, uptime; then Applications (Meta), Search (KRunner), System
 Settings, Account, About This System, Lock Screen, Sleep, Restart, Shut Down,
 Log Out.
 
+"Applications" and the Meta key open the Application Dashboard through its
+global-shortcut action (`activate widget 238`); Plasma's activateLauncherMenu
+doesn't reach the hidden dashboard. Meta is set in `kwinrc`:
+`[ModifierOnlyShortcuts] Meta=org.kde.kglobalaccel,/component/plasmashell,org.kde.kglobalaccel.Component,invokeShortcut,activate widget 238`
+(update the id if the dashboard widget is ever re-created).
+
 Settings in `contents/config/main.xml`: `showLogo` (false = invisible styler
 only), `bgOpacity` (0.72), `stylePanel`.
 

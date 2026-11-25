@@ -70,9 +70,18 @@ PlasmoidItem {
         shell.run(cmd)
     }
 
+    // Opens the Application Dashboard (the hidden kickerdash widget in the dock
+    // panel) through its global-shortcut action. Plasma's activateLauncherMenu
+    // doesn't reach it, so look its widget id up and invoke "activate widget N".
+    readonly property string dashboardCmd:
+        'id=$(awk \'/^\\[Containments\\]\\[[0-9]+\\]\\[Applets\\]\\[[0-9]+\\]$/{s=$0} '
+        + '/^plugin=org.kde.plasma.kickerdash$/{print s}\' "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc" '
+        + '| grep -o "[0-9]*\\]$" | tr -d "]" | head -1); '
+        + 'dbus-send --session --type=method_call --dest=org.kde.kglobalaccel /component/plasmashell '
+        + 'org.kde.kglobalaccel.Component.invokeShortcut string:"activate widget $id"'
+
     readonly property var menuModel: [
-        { icon: "view-app-grid-symbolic", text: "Applications", hint: "Meta",
-          cmd: dbus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.activateLauncherMenu") },
+        { icon: "view-app-grid-symbolic", text: "Applications", hint: "Meta", cmd: dashboardCmd },
         { icon: "search", text: "Search", hint: "Alt+Space",
           cmd: dbus("org.kde.krunner", "/App", "org.kde.krunner.App.display") },
         { separator: true },
