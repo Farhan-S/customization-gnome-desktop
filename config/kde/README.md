@@ -65,17 +65,23 @@ then add "Pixegami Dock" to a bottom panel. After editing the QML, run
 
 ## Pixegami Bar (`plasmoids/com.pixegami.topbar`)
 
-The top bar is three floating "islands", each its own fit-to-content top panel
-with a Pixegami Bar widget in it that styles the panel: the theme background
-is made invisible but kept as the rounded blur shape (KWin blurs behind it),
-and a navy glass tint is drawn under the widgets. Islands are rounded while
-floating and flatten against the edge when a maximized window touches them.
+The top bar is three floating "islands". Each is its own top panel with a
+fixed length so that together they cover the screen (1920px: left 830,
+centre 260, right 830), and a Pixegami Bar widget that styles it:
 
-| Island | Panel | Contents |
+- while floating, the background (navy glass tint + KWin blur shape) hugs the
+  panel's widgets as a rounded pill, so you see three separate islands;
+- when a window touches the bar, Plasma animates the panel's floatingness to
+  0; the widget uses that to grow each pill to its full panel width, so the
+  islands merge smoothly into one flat full-width bar (and split again);
+- the panel content is pinned, so widgets never move while the background
+  grows; spacers keep each island's widgets at their side.
+
+| Island | Panel | Order |
 |---|---|---|
-| left | 242 | Pixegami logo button (showLogo=true) + Global Menu (app menus) |
-| centre | 245 | Digital Clock ("Wed 25 Nov  10:53 PM") + styler |
-| right | 185 | Activity Bar, Color Picker, System Tray + styler |
+| left | 242 | logo button (showLogo=true), Global Menu, spacer |
+| centre | 245 | spacer, Digital Clock ("Wed 25 Nov  10:53 PM"), spacer, styler |
+| right | 185 | spacer, Color Picker, System Tray, styler |
 
 The logo opens the user menu, drawn in Pixegami navy: profile picture
 (`/var/lib/AccountsService/icons/$USER`) in a mint ring, real name,

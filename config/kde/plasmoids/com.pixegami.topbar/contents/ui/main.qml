@@ -481,9 +481,21 @@ PlasmoidItem {
     }
 
     // ---- panel styling ----------------------------------------------------------------
+    // Each top panel ("island") is wider than its contents: left 0..830,
+    // centre 830..1090, right 1090..1920, so together they cover the screen.
+    // While floating, the background (tint + KWin blur shape) hugs the contents
+    // as a rounded pill. When a window touches the bar, Plasma animates the
+    // panel's floatingness 1 -> 0; we use that as `merge` and grow each pill to
+    // fill its whole panel, so the three meet and become one flat bar. The
+    // panel content is pinned so it never moves while the background grows.
     property Item panelRoot: null
+    property Item panelFrame: null
     property var panelFrames: []
     property Item tint: null
+    property real islandL: 0
+    property real islandR: 0
+    readonly property real merge: panelRoot ? Math.max(0, Math.min(1, 1 - panelRoot.floatingness)) : 0
+    readonly property int islandPad: 8
 
     function findPanelRoot() {
         let p = root.parent
@@ -493,6 +505,55 @@ PlasmoidItem {
         }
         return null
     }
+    function findContainmentItem() {
+        let p = root.parent
+        while (p) {
+            if (p.plasmoid && p.plasmoid.pluginName === "org.kde.panel") return p
+            p = p.parent
+        }
+        return null
+    }
+    // Plasma centres the content on the background frame; we resize that frame,
+    // so pin the content to the panel (horizontally) instead.
+    function pinContainment() {
+        const c = findContainmentItem()
+        const cp = c ? c.parent : null
+        if (!cp || cp.parent !== panelRoot || !panelFrame) return
+        cp.anchors.centerIn = undefined
+        cp.x = Qt.binding(() => Math.round((panelRoot.width - cp.width) / 2))
+        cp.y = Qt.binding(() => Math.round(panelFrame.y + (panelFrame.height - cp.height) / 2))
+    }
+    // Horizontal extent of the real widgets (spacers and this invisible styler
+    // don't count), in panel coordinates.
+    function collectApplets(item, out, depth) {
+        if (!item || depth > 10) return
+        if (item.plasmoid && item.plasmoid.pluginName && item !== root
+                && item.plasmoid.pluginName !== "org.kde.panel") {
+            const n = item.plasmoid.pluginName
+            if (n !== "org.kde.plasma.panelspacer" && !(n === "com.pixegami.topbar" && !item.plasmoid.configuration.showLogo)
+                    && item.visible && item.width > 1)
+                out.push(item)
+            return
+        }
+        for (const ch of item.children) collectApplets(ch, out, depth + 1)
+    }
+    function measureIsland() {
+        if (!panelRoot) return
+        const list = []
+        collectApplets(findContainmentItem(), list, 0)
+        if (showLogo) list.push(root)
+        if (!list.length) return
+        let l = 1e9, r = -1e9
+        for (const it of list) {
+            const p = it.mapToItem(panelRoot, 0, 0)
+            l = Math.min(l, p.x); r = Math.max(r, p.x + it.width)
+        }
+        const nl = Math.max(0, Math.round(l - islandPad))
+        const nr = Math.min(panelRoot.width, Math.round(r + islandPad))
+        if (nl !== islandL) islandL = nl
+        if (nr !== islandR) islandR = nr
+    }
+
     function stylePanel() {
         if (!Plasmoid.configuration.stylePanel) return
         panelRoot = findPanelRoot()
@@ -505,20 +566,33 @@ PlasmoidItem {
             if (a && frames.indexOf(a) >= 0) { master = a; break }
         }
         if (!master) return
+        panelFrame = master
         panelFrames = frames.filter(f => f === master || f.anchors.fill === master)
         for (const f of panelFrames) {
             f.imagePath = "dialogs/background"    // rounded blur shape, like the dock
             f.opacity = 0
+            // rounded while floating, square once merged into one bar
+            if (f.enabledBorders !== undefined) f.enabledBorders = Qt.binding(() => root.merge > 0.5 ? 0 : 15)
         }
+        pinContainment()
+        measureIsland()
+        // background: island pill -> whole panel, following Plasma's own animation
+        master.x = Qt.binding(() => Math.round(root.islandL * (1 - root.merge)))
+        master.width = Qt.binding(() => Math.round(root.islandR + (panelRoot.width - root.islandR) * root.merge)
+                                        - Math.round(root.islandL * (1 - root.merge)))
         if (!tint) tint = Qt.createQmlObject('import QtQuick; Rectangle { z: -1 }', panelRoot, "pixegamiTint")
         tint.anchors.fill = master
-        tint.radius = Qt.binding(() => panelRoot.floatingness > 0.5 ? 12 : 0)
+        tint.radius = Qt.binding(() => 12 * (1 - root.merge))
         tint.color = Qt.binding(() => Qt.rgba(root.navy.r, root.navy.g, root.navy.b, Plasmoid.configuration.bgOpacity))
     }
     Timer { interval: 400; running: true; onTriggered: root.stylePanel() }
     Timer {
-        interval: 2000; repeat: true; running: root.panelRoot !== null
-        onTriggered: { for (const f of root.panelFrames) if (f.opacity !== 0) f.opacity = 0 }
+        // keep up with widgets changing size (app menu, tray icons, clock text)
+        interval: 250; repeat: true; running: root.panelRoot !== null
+        onTriggered: {
+            root.measureIsland()
+            for (const f of root.panelFrames) if (f.opacity !== 0) f.opacity = 0
+        }
     }
     Component.onDestruction: if (tint) tint.destroy()
 }
