@@ -166,3 +166,6 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 export PATH="$HOME/.npm-global/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
+
+# Node.js (official build, ~/.local/share/node/current -> latest installed)
+export PATH="$HOME/.local/share/node/current/bin:$PATH"
