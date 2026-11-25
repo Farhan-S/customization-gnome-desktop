@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- navy disc, matches the Pixegami palette -->
+    <radialGradient id="disc" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#1b3444"/>
+      <stop offset="0.65" stop-color="#0f222d"/>
+      <stop offset="1" stop-color="#09161d"/>
+    </radialGradient>
+    <!-- mint to teal, top to bottom -->
+    <linearGradient id="mint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9dffbf"/>
+      <stop offset="0.55" stop-color="#5fe7a6"/>
+      <stop offset="1" stop-color="#22c99a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="60%" r="50%">
+      <stop offset="0" stop-color="#86ffaf" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#86ffaf" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- badge -->
+  <circle cx="64" cy="64" r="60" fill="url(#disc)"/>
+  <circle cx="64" cy="64" r="59.25" fill="none" stroke="#86ffaf" stroke-opacity="0.18" stroke-width="1.5"/>
+  <circle cx="64" cy="72" r="40" fill="url(#glow)"/>
+
+  <!-- hood: outer arch with the inner opening cut out; the sides taper to points -->
+  <path fill="url(#mint)" fill-rule="evenodd"
+        d="M24 102
+           C 21 60, 40 24, 64 24
+           C 88 24, 107 60, 104 102
+           C 97 72, 82 50, 64 50
+           C 46 50, 31 72, 24 102 Z"/>
+
+  <!-- face -->
+  <path fill="url(#mint)" stroke="url(#mint)" stroke-width="2" stroke-linejoin="round"
+        d="M64 62 L87 77 L84 91 L64 101 L44 91 L41 77 Z"/>
+
+  <!-- prompt mark on the face -->
+  <path fill="none" stroke="#0c1c25" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+        d="M58 92 H67 L71.5 88"/>
+</svg>

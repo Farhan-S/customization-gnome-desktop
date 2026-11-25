@@ -541,9 +541,13 @@ PlasmoidItem {
                 const p = point.position
                 last = p
                 const zoomTop = bar.y + bar.height - root.pad - root.maxSize - 4
-                // Only the bar itself starts the zoom; once zooming, the raised
-                // icons above it keep it going. A small side margin, no more.
-                const inX = p.x >= bar.x - root.pad && p.x <= bar.x + bar.width + root.pad
+                // Only the bar starts the zoom; once zooming, the raised icons
+                // above it keep it going. Measured against the bar's *resting*
+                // ends: the live bar widens while zooming, and using its edge
+                // made the zoom flicker on and off at the ends (the "shake").
+                const left = root.restingCenter(0) - root.baseSize / 2 - root.pad
+                const right = root.restingCenter(root.itemCount - 1) + root.baseSize / 2 + root.pad
+                const inX = p.x >= left && p.x <= right
                 root.pointerX = p.x
                 root.hovering = hovered && inX && p.y >= (root.hovering ? zoomTop : bar.y)
                 if (root.hovering) staleTimer.restart()
@@ -559,7 +563,9 @@ PlasmoidItem {
             interval: 400
             onTriggered: {
                 const p = hover.last
-                const onBar = p.x >= bar.x && p.x <= bar.x + bar.width && p.y >= bar.y
+                const onBar = p.x >= root.restingCenter(0) - root.baseSize / 2 - root.pad
+                              && p.x <= root.restingCenter(root.itemCount - 1) + root.baseSize / 2 + root.pad
+                              && p.y >= bar.y
                 const r = icons.mapToItem(stage, 0, 0)
                 const onIcons = p.x >= r.x && p.x <= r.x + icons.width
                                 && p.y >= r.y + icons.height - root.baseSize * root.maxZoom
@@ -610,7 +616,7 @@ PlasmoidItem {
 
             DockIcon {
                 zoom: root.zoomFor(0)
-                iconSource: "org.kde.plasma.kickerdash"
+                iconSource: Qt.resolvedUrl("../images/logo.svg")
                 label: "Application Dashboard"
                 onLeftClicked: root.openDashboard()
             }
