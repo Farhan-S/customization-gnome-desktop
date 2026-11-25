@@ -187,6 +187,7 @@ PlasmoidItem {
         return null
     }
     function openDashboard() {
+        hovering = false        // a fullscreen window is about to cover the dock
         if (dashboardId < 0) hideDashboardApplet()
         if (dashboardId < 0) { openAppLauncher(); return }
         shell.run("dbus-send --session --type=method_call --dest=org.kde.kglobalaccel "
@@ -535,15 +536,39 @@ PlasmoidItem {
 
         HoverHandler {
             id: hover
+            property point last: Qt.point(-1, -1)
             onPointChanged: {
                 const p = point.position
-                const barTop = bar.y
+                last = p
                 const zoomTop = bar.y + bar.height - root.pad - root.maxSize - 4
-                const inX = p.x >= bar.x - root.baseSize && p.x <= bar.x + bar.width + root.baseSize
+                // Only the bar itself starts the zoom; once zooming, the raised
+                // icons above it keep it going. A small side margin, no more.
+                const inX = p.x >= bar.x - root.pad && p.x <= bar.x + bar.width + root.pad
                 root.pointerX = p.x
-                root.hovering = hovered && inX && p.y >= (root.hovering ? zoomTop : barTop)
+                root.hovering = hovered && inX && p.y >= (root.hovering ? zoomTop : bar.y)
+                if (root.hovering) staleTimer.restart()
             }
             onHoveredChanged: if (!hovered) root.hovering = false
+        }
+
+        // Safety net: if the pointer left without the dock getting a final
+        // event (fast exit, a fullscreen window opening on top), and its last
+        // known spot wasn't on an icon or the bar, un-zoom instead of sticking.
+        Timer {
+            id: staleTimer
+            interval: 400
+            onTriggered: {
+                const p = hover.last
+                const onBar = p.x >= bar.x && p.x <= bar.x + bar.width && p.y >= bar.y
+                const r = icons.mapToItem(stage, 0, 0)
+                const onIcons = p.x >= r.x && p.x <= r.x + icons.width
+                                && p.y >= r.y + icons.height - root.baseSize * root.maxZoom
+                if (!hover.hovered || !(onBar || onIcons)) root.hovering = false
+            }
+        }
+        Connections {
+            target: root
+            function onHoveringChanged() { if (!root.hovering) staleTimer.stop() }
         }
 
         // Drop a .desktop file anywhere on the dock to pin it.
