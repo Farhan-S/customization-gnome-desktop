@@ -65,21 +65,36 @@ PlasmoidItem {
     Component.onCompleted: if (showLogo) shell.run(infoCmd)
 
     // ---- live system stats (only polled while the menu is open) -------------------
+    // One value per line, always the same number of lines (missing values are
+    // printed as empty lines so the positions never shift).
     readonly property string statsCmd:
-        'head -1 /proc/stat; grep -E "^(MemTotal|MemAvailable):" /proc/meminfo; '
+        'head -1 /proc/stat; '
+        + 'grep -E "^(MemTotal|MemAvailable|SwapTotal|SwapFree):" /proc/meminfo; '
         + 'df -B1 --output=size,used / | tail -1; '
-        + 'cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1; '
-        + 'cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1; '
-        + 'cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null'
+        + 'echo "$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1)"; '
+        + 'echo "$(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1)"; '
+        + 'echo "$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)"; '
+        + 'w=$(ls /sys/class/net | grep -m1 "^wl"); '
+        + 'echo "$w $(cat /sys/class/net/$w/statistics/rx_bytes 2>/dev/null) $(cat /sys/class/net/$w/statistics/tx_bytes 2>/dev/null)"; '
+        + 'l=$(iw dev "$w" link 2>/dev/null); '
+        + 'echo "$(echo "$l" | sed -n "s/^[[:space:]]*SSID: //p")"; '
+        + 'echo "$(echo "$l" | awk \'/signal:/{print $2}\')"'
     property real cpu: -1          // %
     property real memUsed: 0       // bytes
     property real memTotal: 0
+    property real swapUsed: 0
+    property real swapTotal: 0
     property real diskUsed: 0
     property real diskTotal: 0
     property int battery: -1       // %
     property string batteryStatus: ""
     property real tempC: -1
+    property string wifiName: ""
+    property real wifiSignal: -1   // 0..100
+    property real rxRate: -1       // bytes / s
+    property real txRate: -1
     property var cpuPrev: null
+    property var netPrev: null
 
     function parseStats(out) {
         const l = out.split("\n")
@@ -95,13 +110,65 @@ PlasmoidItem {
         const kb = (s) => Number(((s || "").match(/(\d+)/) || [0, 0])[1]) * 1024
         memTotal = kb(l[1])
         memUsed = memTotal - kb(l[2])
-        const d = (l[3] || "").trim().split(/\s+/).map(Number)
+        swapTotal = kb(l[3])
+        swapUsed = swapTotal - kb(l[4])
+        const d = (l[5] || "").trim().split(/\s+/).map(Number)
         if (d.length === 2) { diskTotal = d[0]; diskUsed = d[1] }
-        battery = l[4] && l[4].trim().length ? Number(l[4]) : -1
-        batteryStatus = (l[5] || "").trim()
-        tempC = l[6] && l[6].trim().length ? Math.round(Number(l[6]) / 1000) : -1
+        battery = (l[6] || "").trim().length ? Number(l[6]) : -1
+        batteryStatus = (l[7] || "").trim()
+        tempC = (l[8] || "").trim().length ? Math.round(Number(l[8]) / 1000) : -1
+
+        const n = (l[9] || "").trim().split(/\s+/)
+        const now = Date.now()
+        if (n.length === 3 && n[1].length) {
+            const rx = Number(n[1]), tx = Number(n[2])
+            if (netPrev && netPrev.iface === n[0] && now > netPrev.t) {
+                const dt = (now - netPrev.t) / 1000
+                rxRate = Math.max(0, (rx - netPrev.rx) / dt)
+                txRate = Math.max(0, (tx - netPrev.tx) / dt)
+            }
+            netPrev = { iface: n[0], rx: rx, tx: tx, t: now }
+        }
+        wifiName = (l[10] || "").trim()
+        const dbm = Number((l[11] || "").trim())
+        // -90 dBm (unusable) .. -40 dBm (excellent) -> 0..100
+        wifiSignal = (l[11] || "").trim().length ? Math.max(0, Math.min(100, (dbm + 90) * 2)) : -1
     }
     function gb(bytes) { return (bytes / 1073741824).toFixed(bytes >= 1e11 ? 0 : 1) }
+    function speed(bps) {
+        if (bps < 0) return "…"
+        if (bps >= 1048576) return (bps / 1048576).toFixed(1) + " MB/s"
+        if (bps >= 1024) return (bps / 1024).toFixed(bps >= 102400 ? 0 : 1) + " KB/s"
+        return Math.round(bps) + " B/s"
+    }
+
+    // Tile contents. The tiles themselves are created once (fixed count) and
+    // only these values change, so the bars animate from where they are
+    // instead of being rebuilt from empty on every refresh.
+    function tile(i) {
+        switch (i) {
+        case 0: return { label: "CPU",
+            value: cpu < 0 ? "…" : cpu + "%" + (tempC > 0 ? "  ·  " + tempC + "°C" : ""),
+            frac: Math.max(0, cpu) / 100, warnHigh: true }
+        case 1: return { label: "Memory",
+            value: memTotal ? gb(memUsed) + " / " + gb(memTotal) + " GB" : "…",
+            frac: memTotal ? memUsed / memTotal : 0, warnHigh: true }
+        case 2: return { label: "Swap",
+            value: swapTotal ? gb(swapUsed) + " / " + gb(swapTotal) + " GB" : "off",
+            frac: swapTotal ? swapUsed / swapTotal : 0, warnHigh: true }
+        case 3: return { label: "Disk",
+            value: diskTotal ? gb(diskUsed) + " / " + gb(diskTotal) + " GB" : "…",
+            frac: diskTotal ? diskUsed / diskTotal : 0, warnHigh: true }
+        case 4: return { label: "Battery",
+            value: battery < 0 ? "—" : battery + "%"
+                   + (batteryStatus === "Charging" ? "  ·  charging" : batteryStatus === "Full" ? "  ·  full" : ""),
+            frac: Math.max(0, battery) / 100, warnLow: true }
+        case 5: return { label: "Wi-Fi" + (wifiName ? "  ·  " + wifiName : ""),
+            value: wifiName || rxRate >= 0 ? "↓ " + speed(rxRate) + "   ↑ " + speed(txRate) : "offline",
+            frac: Math.max(0, wifiSignal) / 100, warnLow: true }
+        }
+        return { label: "", value: "", frac: 0 }
+    }
 
     Timer {
         interval: 1500
@@ -288,34 +355,21 @@ PlasmoidItem {
                             rowSpacing: 10
 
                             Repeater {
-                                model: [
-                                    { label: "CPU",
-                                      value: root.cpu < 0 ? "…" : root.cpu + "%" + (root.tempC > 0 ? "  ·  " + root.tempC + "°C" : ""),
-                                      frac: Math.max(0, root.cpu) / 100 },
-                                    { label: "Memory",
-                                      value: root.memTotal ? root.gb(root.memUsed) + " / " + root.gb(root.memTotal) + " GB" : "…",
-                                      frac: root.memTotal ? root.memUsed / root.memTotal : 0 },
-                                    { label: "Disk",
-                                      value: root.diskTotal ? root.gb(root.diskUsed) + " / " + root.gb(root.diskTotal) + " GB" : "…",
-                                      frac: root.diskTotal ? root.diskUsed / root.diskTotal : 0 },
-                                    { label: "Battery",
-                                      value: root.battery < 0 ? "—" : root.battery + "%"
-                                             + (root.batteryStatus === "Charging" ? "  ·  charging"
-                                                : root.batteryStatus === "Full" ? "  ·  full" : ""),
-                                      frac: Math.max(0, root.battery) / 100 }
-                                ]
+                                model: 6     // fixed tiles; contents come from root.tile(index)
                                 delegate: ColumnLayout {
-                                    required property var modelData
+                                    id: tileItem
+                                    required property int index
+                                    readonly property var modelData: root.tile(index)
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 1
                                     spacing: 4
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        Text { text: modelData.label; color: root.subText; font.pixelSize: 10; font.weight: Font.DemiBold; font.capitalization: Font.AllUppercase; font.letterSpacing: 0.6 }
+                                        Text { text: tileItem.modelData.label; color: root.subText; font.pixelSize: 10; font.weight: Font.DemiBold; font.capitalization: Font.AllUppercase; font.letterSpacing: 0.6; elide: Text.ElideRight; Layout.fillWidth: true }
                                         Item { Layout.fillWidth: true }
                                     }
                                     Text {
-                                        text: modelData.value
+                                        text: tileItem.modelData.value
                                         color: root.textColor
                                         font.pixelSize: 12
                                         elide: Text.ElideRight
@@ -327,11 +381,12 @@ PlasmoidItem {
                                         radius: 2
                                         color: Qt.rgba(1, 1, 1, 0.08)
                                         Rectangle {
-                                            width: parent.width * Math.min(1, modelData.frac)
+                                            width: parent.width * Math.min(1, tileItem.modelData.frac)
                                             height: parent.height
                                             radius: 2
                                             // mint normally, amber when high (battery: when low)
-                                            color: (modelData.label === "Battery" ? modelData.frac < 0.2 && root.battery >= 0 : modelData.frac > 0.85)
+                                            color: (tileItem.modelData.warnLow ? (tileItem.modelData.frac > 0 && tileItem.modelData.frac < 0.2)
+                                                                               : tileItem.modelData.frac > 0.85)
                                                    ? "#ffbc51" : root.mint
                                             Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
                                         }

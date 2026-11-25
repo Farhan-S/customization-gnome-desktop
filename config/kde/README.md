@@ -89,7 +89,8 @@ doesn't reach the hidden dashboard. Meta is set in `kwinrc`:
 `[ModifierOnlyShortcuts] Meta=org.kde.kglobalaccel,/component/plasmashell,org.kde.kglobalaccel.Component,invokeShortcut,activate widget 238`
 (update the id if the dashboard widget is ever re-created).
 
-The menu also shows live stats (CPU % and temperature, memory, disk, battery),
+The menu also shows live stats (CPU % and temperature, memory, swap, disk,
+battery, Wi-Fi name + down/up speed + signal),
 polled every 1.5 s only while it is open; clicking them opens System Monitor.
 Shortcuts are shown as key caps ("Win" = the Windows/Super key, KDE's Meta).
 
