@@ -496,6 +496,7 @@ PlasmoidItem {
     property real islandR: 0
     readonly property real merge: panelRoot ? Math.max(0, Math.min(1, 1 - panelRoot.floatingness)) : 0
     readonly property int islandPad: 8
+    readonly property real mergedOpacity: 0.94
 
     function findPanelRoot() {
         let p = root.parent
@@ -583,7 +584,14 @@ PlasmoidItem {
         if (!tint) tint = Qt.createQmlObject('import QtQuick; Rectangle { z: -1 }', panelRoot, "pixegamiTint")
         tint.anchors.fill = master
         tint.radius = Qt.binding(() => 12 * (1 - root.merge))
-        tint.color = Qt.binding(() => Qt.rgba(root.navy.r, root.navy.g, root.navy.b, Plasmoid.configuration.bgOpacity))
+        // Merged, the three panels are separate windows that KWin blurs
+        // separately, so the blurred wallpaper differs at the seams. Make the
+        // tint (almost) solid as they merge so the seams disappear; floating
+        // islands keep their see-through glass.
+        tint.color = Qt.binding(() => {
+            const a = Plasmoid.configuration.bgOpacity
+            return Qt.rgba(root.navy.r, root.navy.g, root.navy.b, a + (root.mergedOpacity - a) * root.merge)
+        })
     }
     Timer { interval: 400; running: true; onTriggered: root.stylePanel() }
     Timer {

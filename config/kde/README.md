@@ -73,7 +73,9 @@ centre 260, right 830), and a Pixegami Bar widget that styles it:
   panel's widgets as a rounded pill, so you see three separate islands;
 - when a window touches the bar, Plasma animates the panel's floatingness to
   0; the widget uses that to grow each pill to its full panel width, so the
-  islands merge smoothly into one flat full-width bar (and split again);
+  islands merge smoothly into one flat full-width bar (and split again). The
+  tint fades from 72% to 94% opacity as they merge: KWin blurs each panel
+  window separately, so without that the seams between them showed;
 - the panel content is pinned, so widgets never move while the background
   grows; spacers keep each island's widgets at their side.
 
