@@ -29,14 +29,29 @@ systemctl --user restart plasma-plasmashell.service
 
 ## Pixegami Dock (`plasmoids/com.pixegami.dock`)
 
-A Plasma 6 widget written in QML: a macOS-style dock with zoom on hover, in the
-Pixegami palette. It sits in the bottom panel (panel 209), which is 140px tall,
-auto-hides, and has its background hidden by the widget so only the dock bar
-shows; the empty space above the bar is room for the zoomed icons.
+A Plasma 6 widget written in QML: a macOS / Latte-style dock in the Pixegami
+palette. It sits in the bottom panel (panel 209): 140px tall, hides when a
+window covers it ("dodge windows"), panel background hidden by the widget so
+only the semi-transparent dock bar shows. The empty space above the bar is
+room for the zoomed icons.
 
-- Left click: open / focus / minimize; on an app with several windows, cycles them.
-- Middle click: new window. Right click: New Window, Pin/Unpin, Close.
-- Settings in `contents/config/main.xml`: `iconSize` (48), `maxZoom` (1.8).
+- Smooth parabolic zoom (eased pointer, GPU-scaled icons), app name labels.
+- Live window previews on hover (click to focus, middle-click or ✕ to close).
+- Left click: open / focus / minimize; with several windows, shows them all
+  side by side (KWin Window View). Scroll on an icon cycles its windows.
+- Middle click: new window. Right click: New Window, Show All Windows,
+  Pin/Unpin, Minimize/Restore, Close.
+- Drag icons to reorder. Drop files on an app to open them with it; hovering
+  a drag over a running app raises its window. Drop a .desktop file on the
+  dock to pin it.
+- Indicators: dot per window (up to 3), mint pill + glow for the focused app,
+  amber + hop when an app wants attention, bounce while an app starts.
+- Trash at the end: full/empty icon, click to open, drop files to trash.
+- Genie minimize: KWin's Magic Lamp effect is on (`kwinrc` [Plugins]
+  magiclampEnabled=true, squashEnabled=false) and the dock tells KWin where
+  each icon is, so windows minimize into their icon.
+- Settings: right-click the dock > Configure (icon size, zoom, zoom reach,
+  background opacity, labels, previews, Trash, launch bounce).
 
 Install: `ln -sfn ~/.dotfiles/config/kde/plasmoids/com.pixegami.dock ~/.local/share/plasma/plasmoids/`
 then add "Pixegami Dock" to a bottom panel. After editing the QML, run

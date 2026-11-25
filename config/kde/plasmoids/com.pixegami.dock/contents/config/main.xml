@@ -13,5 +13,23 @@
     <entry name="maxZoom" type="Double">
       <default>1.8</default>
     </entry>
+    <entry name="zoomReach" type="Double">
+      <default>3.0</default>
+    </entry>
+    <entry name="bgOpacity" type="Double">
+      <default>0.55</default>
+    </entry>
+    <entry name="showLabels" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="showPreviews" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="showTrash" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="bounceOnLaunch" type="Bool">
+      <default>true</default>
+    </entry>
   </group>
 </kcfg>
