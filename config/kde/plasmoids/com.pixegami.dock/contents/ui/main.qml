@@ -40,7 +40,7 @@ PlasmoidItem {
     readonly property int maxSize: Math.ceil(baseSize * maxZoom)
     readonly property int spacing: Math.round(baseSize / 6)
     readonly property int pad: Math.round(baseSize / 5)
-    readonly property int bottomGap: 8
+    readonly property int bottomGap: 4
     readonly property real influence: baseSize * cfg.zoomReach
 
     preferredRepresentation: fullRepresentation
@@ -49,18 +49,145 @@ PlasmoidItem {
     Layout.fillWidth: true
     Layout.fillHeight: true
 
-    // Hide the panel's own background so only our dock bar shows.
-    function hidePanelBackground() {
-        const c = Plasmoid.containment
-        if (c && c.backgroundHints !== PlasmaCore.Types.NoBackground) {
-            c.backgroundHints = PlasmaCore.Types.NoBackground
+    // ---- panel integration ------------------------------------------------------
+    // The panel draws its background (and asks KWin for blur) from one frame
+    // item that fills the whole panel. We shrink that frame to sit exactly under
+    // our dock bar and make it invisible: KWin then blurs only behind the bar,
+    // and the rest of the tall panel stays fully transparent.
+    property Item panelRoot: null
+    property Item panelFrame: null
+    property var panelFrames: []
+
+    function findPanelRoot() {
+        let p = root.parent
+        while (p) {
+            if (p.floatingTranslucentItemOffset !== undefined) return p
+            p = p.parent
         }
+        return null
     }
-    Component.onCompleted: hidePanelBackground()
-    Connections {
-        target: Plasmoid.containment
-        ignoreUnknownSignals: true
-        function onBackgroundHintsChanged() { root.hidePanelBackground() }
+    function hookPanel() {
+        // Panel background must stay on: Plasma only requests blur when it is.
+        // Its frames are made invisible and resized to the bar below.
+        const c = Plasmoid.containment
+        if (c && c.backgroundHints !== PlasmaCore.Types.StandardBackground) {
+            c.backgroundHints = PlasmaCore.Types.StandardBackground
+        }
+        panelRoot = findPanelRoot()
+        if (!panelRoot) return
+        const frames = []
+        for (const ch of panelRoot.children) {
+            if (ch.imagePath !== undefined) frames.push(ch)
+        }
+        // The master frame is the one the others anchor to.
+        let master = null
+        for (const f of frames) {
+            const a = f.anchors.fill
+            if (a && frames.indexOf(a) >= 0) { master = a; break }
+        }
+        panelFrames = frames.filter(f => f === master || f.anchors.fill === master)
+        panelFrame = master
+        // rounded frame from the Plasma style, so the blur has rounded corners
+        for (const f of panelFrames) {
+            f.imagePath = "dialogs/background"
+            if (f.enabledBorders !== undefined) f.enabledBorders = 15   // all borders
+        }
+        for (const f of panelFrames) f.opacity = 0
+        syncPanelFrame()
+        hideDashboardApplet()
+        fixOverflow()
+        Qt.callLater(fixOverflow)
+        overflowTimer.restart()
+    }
+    function syncPanelFrame() {
+        if (!panelFrame || !panelRoot || !barItem) return
+        const p = barItem.mapToItem(panelRoot, 0, 0)
+        panelFrame.x = Math.round(p.x)
+        panelFrame.y = Math.round(p.y)
+        panelFrame.width = Math.round(barItem.width)
+        panelFrame.height = Math.round(barItem.height)
+        for (const f of panelFrames) f.opacity = 0
+    }
+    property Item barItem: null
+    // How far the bottom of this widget sticks out below the panel window.
+    property real overflow: 0
+    function fixOverflow() {
+        if (!panelRoot) return
+        const bottom = root.mapToItem(panelRoot, 0, root.height).y
+        const o = Math.max(0, Math.round(bottom - panelRoot.height))
+        if (o !== overflow) overflow = o
+        syncPanelFrame()
+    }
+    Timer { id: overflowTimer; interval: 600; onTriggered: root.fixOverflow() }
+    Timer {
+        // keeps the blur region glued to the bar while it resizes during zoom
+        interval: 16
+        repeat: true
+        running: root.panelFrame !== null && (root.hovering || root.zoomAmount > 0.001)
+        onTriggered: root.syncPanelFrame()
+    }
+    Timer {
+        id: hookTimer
+        interval: 400
+        onTriggered: root.hookPanel()
+    }
+    Component.onCompleted: hookTimer.start()
+    onWidthChanged: syncPanelFrame()
+    onHeightChanged: syncPanelFrame()
+
+    // ---- Application Dashboard ----------------------------------------------------
+    // The stock "Application Dashboard" widget lives (hidden) in this panel;
+    // the dock's first icon opens it through its global shortcut action.
+    function findDashboard(item) {
+        if (!item) return null
+        if (item.plasmoid && item.plasmoid.pluginName === "org.kde.plasma.kickerdash") return item
+        for (const ch of item.children) {
+            const r = findDashboard(ch)
+            if (r) return r
+        }
+        return null
+    }
+    property int dashboardId: -1
+    function hideDashboardApplet() {
+        const containmentItem = findContainmentItem()
+        const dash = findDashboard(containmentItem)
+        if (!dash) return
+        dashboardId = dash.plasmoid.id
+        // climb to the panel-layout slot that holds it and collapse that slot
+        let slot = dash
+        while (slot.parent && slot.parent !== root.parent && slot.parent !== containmentItem) {
+            if (slot.parent.children.length > 1 && hasDock(slot.parent)) break
+            slot = slot.parent
+        }
+        slot.visible = false
+        slot.width = 0
+        slot.Layout.preferredWidth = 0
+        slot.Layout.maximumWidth = 0
+        slot.Layout.minimumWidth = 0
+    }
+    function hasDock(item) {
+        for (const ch of item.children) if (isAncestorOf(ch, root)) return true
+        return false
+    }
+    function isAncestorOf(a, b) {
+        let p = b
+        while (p) { if (p === a) return true; p = p.parent }
+        return false
+    }
+    function findContainmentItem() {
+        let p = root.parent
+        while (p) {
+            if (p.plasmoid && p.plasmoid.pluginName === "org.kde.panel") return p
+            p = p.parent
+        }
+        return null
+    }
+    function openDashboard() {
+        if (dashboardId < 0) hideDashboardApplet()
+        if (dashboardId < 0) { openAppLauncher(); return }
+        shell.run("dbus-send --session --type=method_call --dest=org.kde.kglobalaccel "
+                  + "/component/plasmashell org.kde.kglobalaccel.Component.invokeShortcut "
+                  + "string:" + sh("activate widget " + dashboardId))
     }
 
     // ---- data --------------------------------------------------------------
@@ -378,14 +505,14 @@ PlasmoidItem {
     // ---- reorder by drag -------------------------------------------------------
     property int dragRow: -1
 
-    function slotAt(globalX) {
-        for (let i = 0; i < taskRepeater.count; ++i) {
-            const it = taskRepeater.itemAt(i)
-            if (!it) continue
-            const p = it.mapToGlobal(0, 0)
-            if (globalX >= p.x && globalX < p.x + it.width) return i
+    // Task row whose resting slot is nearest to x (root coordinates).
+    function taskRowAt(x) {
+        let best = -1, bestD = 1e9
+        for (let i = 0; i < tasksModel.count; ++i) {
+            const d = Math.abs(x - restingCenter(i + 1))
+            if (d < bestD) { bestD = d; best = i }
         }
-        return -1
+        return best
     }
 
     // ---- view ----------------------------------------------------------------
@@ -396,8 +523,8 @@ PlasmoidItem {
             id: hover
             onPointChanged: {
                 const p = point.position
-                const barTop = stage.height - root.bottomGap - bar.height
-                const zoomTop = stage.height - root.bottomGap - root.pad - root.maxSize - 4
+                const barTop = stage.height - root.bottomGap - root.overflow - bar.height
+                const zoomTop = stage.height - root.bottomGap - root.overflow - root.pad - root.maxSize - 4
                 const inX = p.x >= bar.x - root.baseSize && p.x <= bar.x + bar.width + root.baseSize
                 root.pointerX = p.x
                 root.hovering = hovered && inX && p.y >= (root.hovering ? zoomTop : barTop)
@@ -418,39 +545,22 @@ PlasmoidItem {
         }
 
         // The dock bar: semi-transparent navy with a soft gradient and mint edge.
+        // No border: just a frosted navy tint over KWin's blur.
         Rectangle {
             id: bar
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.bottomGap
+            anchors.bottomMargin: root.bottomGap + root.overflow
             anchors.horizontalCenter: parent.horizontalCenter
             height: root.baseSize + 2 * root.pad
             width: icons.width + 2 * root.pad
             radius: Math.round(height * 0.3)
             gradient: Gradient {
                 GradientStop { position: 0.0; color: Qt.rgba(0.11, 0.2, 0.26, root.cfg.bgOpacity) }
-                GradientStop { position: 1.0; color: Qt.rgba(root.navy.r, root.navy.g, root.navy.b, Math.min(1, root.cfg.bgOpacity + 0.15)) }
+                GradientStop { position: 1.0; color: Qt.rgba(root.navy.r, root.navy.g, root.navy.b, Math.min(1, root.cfg.bgOpacity + 0.1)) }
             }
-            border.width: 1
-            border.color: Qt.rgba(root.mint.r, root.mint.g, root.mint.b, 0.22)
-
-            // soft drop shadow
-            Rectangle {
-                z: -1
-                anchors.fill: parent
-                anchors.margins: -2
-                anchors.topMargin: 2
-                radius: parent.radius + 2
-                color: "transparent"
-                border.width: 3
-                border.color: Qt.rgba(0, 0, 0, 0.18)
-            }
-            // top sheen
-            Rectangle {
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 1 }
-                height: 1
-                radius: 1
-                color: Qt.rgba(1, 1, 1, 0.10)
-            }
+            Component.onCompleted: root.barItem = bar
+            onWidthChanged: root.syncPanelFrame()
+            onXChanged: root.syncPanelFrame()
         }
 
         Row {
@@ -463,9 +573,9 @@ PlasmoidItem {
 
             DockIcon {
                 zoom: root.zoomFor(0)
-                iconSource: "start-here-kde-plasma"
-                label: "Applications"
-                onLeftClicked: root.openAppLauncher()
+                iconSource: "org.kde.plasma.kickerdash"
+                label: "Application Dashboard"
+                onLeftClicked: root.openDashboard()
             }
 
             Repeater {
@@ -752,22 +862,28 @@ PlasmoidItem {
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+            preventStealing: true          // keep the drag; don't let the panel take it
             property real pressX: 0
             property bool moved: false
 
             onContainsMouseChanged: containsMouse ? item.hoverStarted() : item.hoverEnded()
 
-            onPressed: (e) => { pressX = e.x; moved = false }
+            onPressed: (e) => {
+                pressX = mapToItem(root, e.x, e.y).x
+                moved = false
+            }
             onPositionChanged: (e) => {
-                if (!(e.buttons & Qt.LeftButton) || item.taskRow < 0) return
-                if (!moved && Math.abs(e.x - pressX) > 10) {
+                if (!pressed || pressedButtons !== Qt.LeftButton || item.taskRow < 0) return
+                const x = mapToItem(root, e.x, e.y).x
+                if (!moved && Math.abs(x - pressX) > 8) {
                     moved = true
                     root.dragRow = item.taskRow
                     root.hidePreview()
+                    previewDelay_stop()
                 }
                 if (moved) {
-                    const g = mapToGlobal(e.x, e.y)
-                    const target = root.slotAt(g.x)
+                    root.pointerX = x
+                    const target = root.taskRowAt(x)
                     if (target >= 0 && target !== root.dragRow) {
                         tasksModel.move(root.dragRow, target)
                         root.dragRow = target
@@ -780,6 +896,14 @@ PlasmoidItem {
                     root.dragRow = -1
                 }
             }
+            onCanceled: {
+                if (moved) {
+                    tasksModel.syncLaunchers()
+                    root.dragRow = -1
+                    moved = false
+                }
+            }
+            function previewDelay_stop() { item.hoverEnded() }
             onClicked: (e) => {
                 if (moved) return
                 if (e.button === Qt.LeftButton) { pressAnim.restart(); item.leftClicked() }

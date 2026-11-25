@@ -36,12 +36,18 @@ only the semi-transparent dock bar shows. The empty space above the bar is
 room for the zoomed icons.
 
 - Smooth parabolic zoom (eased pointer, GPU-scaled icons), app name labels.
+- Borderless semi-transparent bar with real KWin blur behind it: the widget
+  resizes the panel's (invisible) background frame to the bar, so Plasma asks
+  KWin to blur only that rounded area.
+- First icon opens the Application Dashboard: a stock `kickerdash` widget lives
+  hidden in the same panel (global shortcut Ctrl+Alt+Meta+D), and the icon
+  triggers it through kglobalaccel.
 - Live window previews on hover (click to focus, middle-click or ✕ to close).
 - Left click: open / focus / minimize; with several windows, shows them all
   side by side (KWin Window View). Scroll on an icon cycles its windows.
 - Middle click: new window. Right click: New Window, Show All Windows,
   Pin/Unpin, Minimize/Restore, Close.
-- Drag icons to reorder. Drop files on an app to open them with it; hovering
+- Drag icons left/right to reorder (order is saved to the pinned list). Drop files on an app to open them with it; hovering
   a drag over a running app raises its window. Drop a .desktop file on the
   dock to pin it.
 - Indicators: dot per window (up to 3), mint pill + glow for the focused app,
