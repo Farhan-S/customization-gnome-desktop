@@ -89,6 +89,17 @@ doesn't reach the hidden dashboard. Meta is set in `kwinrc`:
 `[ModifierOnlyShortcuts] Meta=org.kde.kglobalaccel,/component/plasmashell,org.kde.kglobalaccel.Component,invokeShortcut,activate widget 238`
 (update the id if the dashboard widget is ever re-created).
 
+The menu also shows live stats (CPU % and temperature, memory, disk, battery),
+polled every 1.5 s only while it is open; clicking them opens System Monitor.
+Shortcuts are shown as key caps ("Win" = the Windows/Super key, KDE's Meta).
+
+Power shortcuts (global, stored in `~/.config/kglobalshortcutsrc`):
+Lock Win+L and Log Out Ctrl+Alt+Del are KDE defaults; added:
+Sleep Win+Alt+S, Restart Win+Alt+R, Shut Down Win+Alt+Q. To re-create them,
+use System Settings > Shortcuts (Power Management > Suspend; Session
+Management > Reboot / Shut Down), or the kglobalaccel D-Bus call
+`setForeignShortcutKeys` as done on 2026-11-25.
+
 Settings in `contents/config/main.xml`: `showLogo` (false = invisible styler
 only), `bgOpacity` (0.72), `stylePanel`.
 
