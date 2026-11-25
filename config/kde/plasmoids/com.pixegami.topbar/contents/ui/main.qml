@@ -65,8 +65,11 @@ PlasmoidItem {
     function dbus(dest, path, method) {
         return "dbus-send --session --type=method_call --dest=" + dest + " " + path + " " + method
     }
+    // The menu lives inside the bar representation, so its id isn't visible
+    // here; it registers itself in menuWindow.
+    property var menuWindow: null
     function act(cmd) {
-        menu.visible = false
+        if (menuWindow) menuWindow.visible = false
         shell.run(cmd)
     }
 
@@ -142,6 +145,7 @@ PlasmoidItem {
             backgroundHints: PlasmaCore.Dialog.NoBackground
             hideOnWindowDeactivate: true
             visible: false
+            Component.onCompleted: root.menuWindow = menu
 
             mainItem: Rectangle {
                 id: card
