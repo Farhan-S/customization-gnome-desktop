@@ -95,35 +95,44 @@ PlasmoidItem {
         for (const f of panelFrames) f.opacity = 0
         syncPanelFrame()
         hideDashboardApplet()
-        fixOverflow()
-        Qt.callLater(fixOverflow)
-        overflowTimer.restart()
+        Qt.callLater(syncPanelFrame)
     }
-    function syncPanelFrame() {
-        if (!panelFrame || !panelRoot || !barItem) return
-        const p = barItem.mapToItem(panelRoot, 0, 0)
-        panelFrame.x = Math.round(p.x)
-        panelFrame.y = Math.round(p.y)
-        panelFrame.width = Math.round(barItem.width)
-        panelFrame.height = Math.round(barItem.height)
-        for (const f of panelFrames) f.opacity = 0
-    }
+    // Bar geometry. The blur frame is placed from the panel's own size only
+    // (centred, at the bottom) and the bar is then positioned onto it. Nothing
+    // here depends on where Plasma put this widget, so there is no feedback.
     property Item barItem: null
-    // How far the bottom of this widget sticks out below the panel window.
-    property real overflow: 0
-    function fixOverflow() {
-        if (!panelRoot) return
-        const bottom = root.mapToItem(panelRoot, 0, root.height).y
-        const o = Math.max(0, Math.round(bottom - panelRoot.height))
-        if (o !== overflow) overflow = o
-        syncPanelFrame()
+    property real barX: (width - barW) / 2
+    property real barY: height - bottomGap - barH
+    property real dockCenterX: width / 2
+    readonly property real barW: (barItem ? barItem.width : 0)
+    readonly property real barH: baseSize + 2 * pad
+
+    function syncPanelFrame() {
+        if (!panelRoot || !barItem) return
+        const fw = Math.round(barW)
+        const fh = Math.round(barH)
+        const fx = Math.round((panelRoot.width - fw) / 2)
+        const fy = Math.round(panelRoot.height - bottomGap - fh)
+        if (panelFrame) {
+            if (panelFrame.x !== fx) panelFrame.x = fx
+            if (panelFrame.y !== fy) panelFrame.y = fy
+            if (panelFrame.width !== fw) panelFrame.width = fw
+            if (panelFrame.height !== fh) panelFrame.height = fh
+            for (const f of panelFrames) if (f.opacity !== 0) f.opacity = 0
+        }
+        const p = root.mapFromItem(panelRoot, fx, fy)
+        if (Math.abs(p.x - barX) > 0.5) barX = p.x
+        if (Math.abs(p.y - barY) > 0.5) barY = p.y
+        const c = root.mapFromItem(panelRoot, panelRoot.width / 2, 0).x
+        if (Math.abs(c - dockCenterX) > 0.5) dockCenterX = c
     }
-    Timer { id: overflowTimer; interval: 600; onTriggered: root.fixOverflow() }
+    // Plasma can re-layout the panel later (unlock, screen changes): recheck.
+    Timer { interval: 250; repeat: true; running: root.panelRoot !== null; onTriggered: root.syncPanelFrame() }
     Timer {
         // keeps the blur region glued to the bar while it resizes during zoom
         interval: 16
         repeat: true
-        running: root.panelFrame !== null && (root.hovering || root.zoomAmount > 0.001)
+        running: root.panelRoot !== null && (root.hovering || root.zoomAmount > 0.001 || root.dragRow >= 0)
         onTriggered: root.syncPanelFrame()
     }
     Timer {
@@ -134,6 +143,8 @@ PlasmoidItem {
     Component.onCompleted: hookTimer.start()
     onWidthChanged: syncPanelFrame()
     onHeightChanged: syncPanelFrame()
+    onXChanged: syncPanelFrame()
+    onYChanged: syncPanelFrame()
 
     // ---- Application Dashboard ----------------------------------------------------
     // The stock "Application Dashboard" widget lives (hidden) in this panel;
@@ -153,17 +164,10 @@ PlasmoidItem {
         const dash = findDashboard(containmentItem)
         if (!dash) return
         dashboardId = dash.plasmoid.id
-        // climb to the panel-layout slot that holds it and collapse that slot
-        let slot = dash
-        while (slot.parent && slot.parent !== root.parent && slot.parent !== containmentItem) {
-            if (slot.parent.children.length > 1 && hasDock(slot.parent)) break
-            slot = slot.parent
-        }
-        slot.visible = false
-        slot.width = 0
-        slot.Layout.preferredWidth = 0
-        slot.Layout.maximumWidth = 0
-        slot.Layout.minimumWidth = 0
+        // Leave its panel slot alone (changing it makes Plasma re-layout the
+        // panel); just make the widget invisible and unclickable.
+        dash.opacity = 0
+        dash.enabled = false
     }
     function hasDock(item) {
         for (const ch of item.children) if (isAncestorOf(ch, root)) return true
@@ -333,7 +337,7 @@ PlasmoidItem {
         // slots: 0 launcher, 1..n tasks, then separator gap + trash
         const sepExtra = cfg.showTrash ? spacing * 2 + 2 : 0
         const total = itemCount * baseSize + (itemCount - 1) * spacing + sepExtra
-        let x = (width - total) / 2 + slot * (baseSize + spacing) + baseSize / 2
+        let x = dockCenterX - total / 2 + slot * (baseSize + spacing) + baseSize / 2
         if (cfg.showTrash && slot === itemCount - 1) x += sepExtra
         return x
     }
@@ -518,13 +522,23 @@ PlasmoidItem {
     // ---- view ----------------------------------------------------------------
     fullRepresentation: Item {
         id: stage
+        // Fixed size hints: the panel must never size or place this widget from
+        // its children, or moving the bar would move the widget (feedback loop).
+        implicitWidth: 0
+        implicitHeight: 0
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumWidth: 200
+        Layout.preferredWidth: 200
+        Layout.minimumHeight: 0
+        Layout.preferredHeight: 0
 
         HoverHandler {
             id: hover
             onPointChanged: {
                 const p = point.position
-                const barTop = stage.height - root.bottomGap - root.overflow - bar.height
-                const zoomTop = stage.height - root.bottomGap - root.overflow - root.pad - root.maxSize - 4
+                const barTop = bar.y
+                const zoomTop = bar.y + bar.height - root.pad - root.maxSize - 4
                 const inX = p.x >= bar.x - root.baseSize && p.x <= bar.x + bar.width + root.baseSize
                 root.pointerX = p.x
                 root.hovering = hovered && inX && p.y >= (root.hovering ? zoomTop : barTop)
@@ -548,19 +562,17 @@ PlasmoidItem {
         // No border: just a frosted navy tint over KWin's blur.
         Rectangle {
             id: bar
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.bottomGap + root.overflow
-            anchors.horizontalCenter: parent.horizontalCenter
-            height: root.baseSize + 2 * root.pad
+            x: root.barX
+            y: root.barY
+            height: root.barH
             width: icons.width + 2 * root.pad
-            radius: Math.round(height * 0.3)
+            radius: 12
             gradient: Gradient {
                 GradientStop { position: 0.0; color: Qt.rgba(0.11, 0.2, 0.26, root.cfg.bgOpacity) }
                 GradientStop { position: 1.0; color: Qt.rgba(root.navy.r, root.navy.g, root.navy.b, Math.min(1, root.cfg.bgOpacity + 0.1)) }
             }
             Component.onCompleted: root.barItem = bar
             onWidthChanged: root.syncPanelFrame()
-            onXChanged: root.syncPanelFrame()
         }
 
         Row {
