@@ -93,25 +93,48 @@ PlasmoidItem {
             if (f.enabledBorders !== undefined) f.enabledBorders = 15   // all borders
         }
         for (const f of panelFrames) f.opacity = 0
+        pinContainment()
         syncPanelFrame()
         hideDashboardApplet()
-        Qt.callLater(syncPanelFrame)
+        Qt.callLater(measureBar)
     }
+    // Plasma centres the panel's content on the background frame
+    // (containmentParent: anchors.centerIn: floatingTranslucentItem). Since we
+    // resize that frame with the bar, the whole dock moved with it: half-pixel
+    // rounding made it jump 1px back and forth while zooming (the vibration).
+    // Pin the content to the panel itself instead, where it would sit anyway.
+    function pinContainment() {
+        const c = findContainmentItem()
+        const cp = c ? c.parent : null
+        if (!cp || cp.parent !== panelRoot) return
+        cp.anchors.centerIn = undefined
+        cp.x = Qt.binding(() => Math.round((panelRoot.width - cp.width) / 2))
+        cp.y = Qt.binding(() => Math.round((panelRoot.height - cp.height) / 2))
+    }
+
     // Bar geometry. The blur frame is placed from the panel's own size only
-    // (centred, at the bottom) and the bar is then positioned onto it. Nothing
-    // here depends on where Plasma put this widget, so there is no feedback.
+    // (centred, at the bottom) and the bar is placed on it by plain bindings:
+    // this widget no longer moves, so its offset in the panel is a constant
+    // (re-measured while idle). All hover/zoom maths uses panel coordinates.
     property Item barItem: null
-    property real barX: (width - barW) / 2
-    property real barY: height - bottomGap - barH
-    property real dockCenterX: width / 2
+    property real rootPanelX: 0
+    property real rootPanelY: 0
+    readonly property real barX: Math.round((panelW - barW) / 2) - rootPanelX
+    readonly property real barY: (panelRoot ? panelRoot.height : height) - bottomGap - barH - rootPanelY
     readonly property real barW: (barItem ? barItem.width : 0)
     readonly property real barH: baseSize + 2 * pad
+    readonly property real panelW: panelRoot ? panelRoot.width : width
+
+    // x of a point in item coordinates, expressed in (stable) panel coordinates
+    function toPanelX(item, x) {
+        return panelRoot ? item.mapToItem(panelRoot, x, 0).x : item.mapToItem(root, x, 0).x
+    }
 
     function syncPanelFrame() {
         if (!panelRoot || !barItem) return
         const fw = Math.round(barW)
         const fh = Math.round(barH)
-        const fx = Math.round((panelRoot.width - fw) / 2)
+        const fx = Math.round((panelRoot.width - barW) / 2)
         const fy = Math.round(panelRoot.height - bottomGap - fh)
         if (panelFrame) {
             if (panelFrame.x !== fx) panelFrame.x = fx
@@ -120,31 +143,25 @@ PlasmoidItem {
             if (panelFrame.height !== fh) panelFrame.height = fh
             for (const f of panelFrames) if (f.opacity !== 0) f.opacity = 0
         }
-        const p = root.mapFromItem(panelRoot, fx, fy)
-        if (Math.abs(p.x - barX) > 0.5) barX = p.x
-        if (Math.abs(p.y - barY) > 0.5) barY = p.y
-        const c = root.mapFromItem(panelRoot, panelRoot.width / 2, 0).x
-        if (Math.abs(c - dockCenterX) > 0.5) dockCenterX = c
     }
-    // Plasma can re-layout the panel later (unlock, screen changes): recheck.
-    Timer { interval: 250; repeat: true; running: root.panelRoot !== null; onTriggered: root.syncPanelFrame() }
-    Timer {
-        // keeps the blur region glued to the bar while it resizes during zoom
-        interval: 16
-        repeat: true
-        running: root.panelRoot !== null && (root.hovering || root.zoomAmount > 0.001 || root.dragRow >= 0)
-        onTriggered: root.syncPanelFrame()
+    function measureBar() {
+        if (!panelRoot || !barItem) return
+        syncPanelFrame()
+        // the bar's parent (the dock's own item), not the widget wrapper
+        const p = barItem.parent.mapToItem(panelRoot, 0, 0)
+        if (Math.abs(p.x - rootPanelX) > 0.5) rootPanelX = Math.round(p.x)
+        if (Math.abs(p.y - rootPanelY) > 0.5) rootPanelY = Math.round(p.y)
     }
+    // Idle re-check (Plasma can re-layout the panel: unlock, screen changes...).
+    Timer { interval: 500; repeat: true; running: root.panelRoot !== null; onTriggered: root.measureBar() }
     Timer {
         id: hookTimer
         interval: 400
         onTriggered: root.hookPanel()
     }
     Component.onCompleted: hookTimer.start()
-    onWidthChanged: syncPanelFrame()
-    onHeightChanged: syncPanelFrame()
-    onXChanged: syncPanelFrame()
-    onYChanged: syncPanelFrame()
+    onWidthChanged: measureBar()
+    onHeightChanged: measureBar()
 
     // ---- Application Dashboard ----------------------------------------------------
     // The stock "Application Dashboard" widget lives (hidden) in this panel;
@@ -338,7 +355,7 @@ PlasmoidItem {
         // slots: 0 launcher, 1..n tasks, then separator gap + trash
         const sepExtra = cfg.showTrash ? spacing * 2 + 2 : 0
         const total = itemCount * baseSize + (itemCount - 1) * spacing + sepExtra
-        let x = dockCenterX - total / 2 + slot * (baseSize + spacing) + baseSize / 2
+        let x = panelW / 2 - total / 2 + slot * (baseSize + spacing) + baseSize / 2
         if (cfg.showTrash && slot === itemCount - 1) x += sepExtra
         return x
     }
@@ -349,6 +366,8 @@ PlasmoidItem {
         const s = (1 + Math.cos(Math.PI * d / influence)) / 2
         return 1 + (maxZoom - 1) * s * zoomAmount
     }
+
+
 
     // ---- previews ------------------------------------------------------------
     property Item previewFor: null       // the DockIcon whose preview is open
@@ -510,7 +529,7 @@ PlasmoidItem {
     // ---- reorder by drag -------------------------------------------------------
     property int dragRow: -1
 
-    // Task row whose resting slot is nearest to x (root coordinates).
+    // Task row whose resting slot is nearest to x (panel coordinates).
     function taskRowAt(x) {
         let best = -1, bestD = 1e9
         for (let i = 0; i < tasksModel.count; ++i) {
@@ -536,10 +555,11 @@ PlasmoidItem {
 
         HoverHandler {
             id: hover
-            property point last: Qt.point(-1, -1)
+            property point last: Qt.point(-1, -1)      // y local, x in panel coords
             onPointChanged: {
                 const p = point.position
-                last = p
+                const px = root.toPanelX(stage, p.x)
+                last = Qt.point(px, p.y)
                 const zoomTop = bar.y + bar.height - root.pad - root.maxSize - 4
                 // Only the bar starts the zoom; once zooming, the raised icons
                 // above it keep it going. Measured against the bar's *resting*
@@ -547,8 +567,8 @@ PlasmoidItem {
                 // made the zoom flicker on and off at the ends (the "shake").
                 const left = root.restingCenter(0) - root.baseSize / 2 - root.pad
                 const right = root.restingCenter(root.itemCount - 1) + root.baseSize / 2 + root.pad
-                const inX = p.x >= left && p.x <= right
-                root.pointerX = p.x
+                const inX = px >= left && px <= right
+                root.pointerX = px
                 root.hovering = hovered && inX && p.y >= (root.hovering ? zoomTop : bar.y)
                 if (root.hovering) staleTimer.restart()
             }
@@ -567,7 +587,8 @@ PlasmoidItem {
                               && p.x <= root.restingCenter(root.itemCount - 1) + root.baseSize / 2 + root.pad
                               && p.y >= bar.y
                 const r = icons.mapToItem(stage, 0, 0)
-                const onIcons = p.x >= r.x && p.x <= r.x + icons.width
+                const il = root.toPanelX(icons, 0)
+                const onIcons = p.x >= il && p.x <= il + icons.width
                                 && p.y >= r.y + icons.height - root.baseSize * root.maxZoom
                 if (!hover.hovered || !(onBar || onIcons)) root.hovering = false
             }
@@ -912,12 +933,12 @@ PlasmoidItem {
             onContainsMouseChanged: containsMouse ? item.hoverStarted() : item.hoverEnded()
 
             onPressed: (e) => {
-                pressX = mapToItem(root, e.x, e.y).x
+                pressX = root.toPanelX(mouse, e.x)
                 moved = false
             }
             onPositionChanged: (e) => {
                 if (!pressed || pressedButtons !== Qt.LeftButton || item.taskRow < 0) return
-                const x = mapToItem(root, e.x, e.y).x
+                const x = root.toPanelX(mouse, e.x)
                 if (!moved && Math.abs(x - pressX) > 8) {
                     moved = true
                     root.dragRow = item.taskRow
