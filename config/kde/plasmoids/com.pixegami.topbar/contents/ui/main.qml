@@ -1,11 +1,14 @@
 /*
- * Pixegami Bar: the left-hand logo button of the top bar, plus panel styling.
+ * Pixegami Bar: top-bar islands in the Pixegami style.
  *
- * - Logo button opens the Pixegami menu (applications, search, settings,
- *   about, lock / sleep / restart / shut down / log out).
- * - Styles the panel it lives in to match the Pixegami Dock: the theme's
- *   panel background is made invisible (KWin still blurs behind it) and a
- *   semi-transparent navy tint with rounded corners is drawn instead.
+ * One widget, two jobs:
+ * - Styles the panel it sits in: the theme's panel background is made
+ *   invisible but kept as the (rounded) blur shape, so KWin blurs behind the
+ *   panel, and a navy glass tint is drawn under the panel's widgets.
+ *   Each top island (left / clock / tray) is its own fit-to-content floating
+ *   panel with one of these widgets in it.
+ * - With showLogo (left island): the Pixegami logo button, which opens the
+ *   user menu (profile picture, name, power and system actions).
  */
 import QtQuick
 import QtQuick.Layouts
@@ -18,54 +21,63 @@ PlasmoidItem {
     id: root
 
     readonly property color navy: "#0c1c25"
+    readonly property color navyLight: "#152535"
     readonly property color mint: "#86ffaf"
     readonly property color textColor: "#e8f4f0"
     readonly property color subText: "#8fa8a0"
     readonly property url logo: Qt.resolvedUrl("../images/logo.svg")
+    readonly property bool showLogo: Plasmoid.configuration.showLogo
 
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
-    preferredRepresentation: compactRepresentation
-    toolTipMainText: "Pixegami"
-    toolTipSubText: "Applications, settings and power"
+    preferredRepresentation: fullRepresentation
+    toolTipMainText: ""
 
-    // ---- shell commands ---------------------------------------------------------
+    // ---- user / system info -------------------------------------------------------
     P5Support.DataSource {
         id: shell
         engine: "executable"
         connectedSources: []
         onNewData: (source, data) => {
             if (source === root.infoCmd) {
-                const lines = (data["stdout"] || "").trim().split("\n")
-                root.userHost = lines[0] || ""
-                root.osName = lines[1] || ""
-                root.uptime = (lines[2] || "").replace(/^up /, "")
+                const l = (data["stdout"] || "").split("\n")
+                root.realName = l[0] || ""
+                root.userName = l[1] || ""
+                root.hostName = l[2] || ""
+                root.osName = l[3] || ""
+                root.uptime = (l[4] || "").replace(/^up /, "")
             }
             disconnectSource(source)
         }
         function run(cmd) { connectSource(cmd) }
     }
-    readonly property string infoCmd: 'echo "$USER@$(hostname)"; . /etc/os-release; echo "$PRETTY_NAME"; uptime -p'
-    property string userHost: ""
+    readonly property string infoCmd:
+        'getent passwd "$USER" | cut -d: -f5 | cut -d, -f1; echo "$USER"; hostname; '
+        + '. /etc/os-release; echo "$PRETTY_NAME"; uptime -p'
+    property string realName: ""
+    property string userName: ""
+    property string hostName: ""
     property string osName: ""
     property string uptime: ""
-    onExpandedChanged: if (root.expanded) shell.run(root.infoCmd)
+    readonly property string avatar: userName
+        ? "file:///var/lib/AccountsService/icons/" + userName : ""
+    Component.onCompleted: if (showLogo) shell.run(infoCmd)
 
     function dbus(dest, path, method) {
         return "dbus-send --session --type=method_call --dest=" + dest + " " + path + " " + method
     }
     function act(cmd) {
-        root.expanded = false
+        menu.visible = false
         shell.run(cmd)
     }
 
     readonly property var menuModel: [
-        { section: true },
-        { icon: "applications-all", text: "Applications", hint: "Meta",
+        { icon: "view-app-grid-symbolic", text: "Applications", hint: "Meta",
           cmd: dbus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.activateLauncherMenu") },
         { icon: "search", text: "Search", hint: "Alt+Space",
           cmd: dbus("org.kde.krunner", "/App", "org.kde.krunner.App.display") },
-        { icon: "preferences-system", text: "System Settings", cmd: "systemsettings" },
-        { icon: "plasmadiscover", text: "Discover", cmd: "plasma-discover" },
+        { separator: true },
+        { icon: "configure-symbolic", text: "System Settings", cmd: "systemsettings" },
+        { icon: "user-identity", text: "Account", cmd: "systemsettings kcm_users" },
         { icon: "help-about", text: "About This System", cmd: "kinfocenter" },
         { separator: true },
         { icon: "system-lock-screen", text: "Lock Screen", hint: "Meta+L", cmd: "loginctl lock-session" },
@@ -74,133 +86,183 @@ PlasmoidItem {
           cmd: dbus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt.promptReboot") },
         { icon: "system-shutdown", text: "Shut Down…",
           cmd: dbus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt.promptShutDown") },
-        { separator: true },
         { icon: "system-log-out", text: "Log Out…",
           cmd: dbus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt.promptLogout") }
     ]
 
-    // ---- the logo button in the bar ------------------------------------------------
-    compactRepresentation: MouseArea {
+    // ---- in the bar: the logo button (or nothing, when only styling) -------------------
+    fullRepresentation: MouseArea {
         id: button
-        hoverEnabled: true
-        Layout.minimumWidth: height + 8
-        Layout.preferredWidth: height + 8
-        onClicked: root.expanded = !root.expanded
+        hoverEnabled: root.showLogo
+        enabled: root.showLogo
+        visible: root.showLogo
+        Layout.minimumWidth: root.showLogo ? height + 6 : 0
+        Layout.preferredWidth: root.showLogo ? height + 6 : 0
+        Layout.maximumWidth: root.showLogo ? height + 6 : 0
+        onClicked: {
+            if (!menu.visible) shell.run(root.infoCmd)
+            menu.visible = !menu.visible
+        }
 
         Rectangle {
             anchors.centerIn: parent
-            width: parent.height - 4
-            height: parent.height - 4
-            radius: 8
+            width: parent.height - 6
+            height: parent.height - 6
+            radius: 9
             color: Qt.rgba(root.mint.r, root.mint.g, root.mint.b,
-                           root.expanded ? 0.18 : (button.containsMouse ? 0.10 : 0))
+                           menu.visible ? 0.18 : (button.containsMouse ? 0.10 : 0))
             Behavior on color { ColorAnimation { duration: 140 } }
         }
         Kirigami.Icon {
             anchors.centerIn: parent
-            width: Math.round(parent.height * 0.68)
+            width: Math.round(parent.height * 0.62)
             height: width
             source: root.logo
             roundToIconSize: false
             scale: button.pressed ? 0.92 : (button.containsMouse ? 1.06 : 1)
             Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
         }
-    }
 
-    // ---- the Pixegami menu ------------------------------------------------------------
-    fullRepresentation: ColumnLayout {
-        Layout.minimumWidth: Kirigami.Units.gridUnit * 16
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 16
-        spacing: 2
+        // ---- the user menu: our own window, drawn fully in Pixegami navy -------------
+        PlasmaCore.Dialog {
+            id: menu
+            visualParent: button
+            location: PlasmaCore.Types.TopEdge
+            type: PlasmaCore.Dialog.PopupMenu
+            flags: Qt.WindowStaysOnTopHint
+            backgroundHints: PlasmaCore.Dialog.NoBackground
+            hideOnWindowDeactivate: true
+            visible: false
 
-        // header
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.margins: 8
-            spacing: 12
-            Kirigami.Icon {
-                source: root.logo
-                roundToIconSize: false
-                Layout.preferredWidth: 44
-                Layout.preferredHeight: 44
-            }
-            ColumnLayout {
-                spacing: 1
-                Text { text: "Pixegami"; color: root.mint; font.pixelSize: 17; font.weight: Font.DemiBold }
-                Text { text: root.userHost; color: root.textColor; font.pixelSize: 12; visible: text.length > 0 }
-                Text {
-                    text: root.osName + (root.uptime ? "  ·  up " + root.uptime : "")
-                    color: root.subText; font.pixelSize: 11
-                    visible: root.osName.length > 0
-                    elide: Text.ElideRight
-                    Layout.maximumWidth: Kirigami.Units.gridUnit * 11
-                }
-            }
-        }
+            mainItem: Rectangle {
+                id: card
+                width: Kirigami.Units.gridUnit * 17
+                height: content.implicitHeight + 20
+                radius: 16
+                color: Qt.rgba(root.navy.r, root.navy.g, root.navy.b, 0.97)
+                border.width: 1
+                border.color: Qt.rgba(root.mint.r, root.mint.g, root.mint.b, 0.12)
+                focus: true
+                Keys.onEscapePressed: menu.visible = false
 
-        Repeater {
-            model: root.menuModel
-            delegate: Item {
-                id: entry
-                required property var modelData
-                Layout.fillWidth: true
-                Layout.preferredHeight: modelData.section ? 4 : (modelData.separator ? 9 : 34)
+                ColumnLayout {
+                    id: content
+                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+                    spacing: 2
 
-                Rectangle {   // separator line
-                    visible: !!entry.modelData.separator
-                    anchors.centerIn: parent
-                    width: parent.width - 16
-                    height: 1
-                    color: Qt.rgba(root.mint.r, root.mint.g, root.mint.b, 0.15)
-                }
-
-                Rectangle {   // a menu row
-                    visible: !entry.modelData.separator && !entry.modelData.section
-                    anchors.fill: parent
-                    anchors.leftMargin: 4
-                    anchors.rightMargin: 4
-                    radius: 8
-                    color: rowMouse.containsMouse ? Qt.rgba(root.mint.r, root.mint.g, root.mint.b, 0.14) : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
-
+                    // header: profile picture, name, account
                     RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 10
-                        Kirigami.Icon {
-                            source: entry.modelData.icon || ""
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
+                        Layout.fillWidth: true
+                        Layout.margins: 6
+                        Layout.bottomMargin: 10
+                        spacing: 12
+
+                        Item {
+                            Layout.preferredWidth: 52
+                            Layout.preferredHeight: 52
+                            Rectangle {   // mint ring
+                                anchors.fill: parent
+                                radius: width / 2
+                                color: "transparent"
+                                border.width: 2
+                                border.color: root.mint
+                            }
+                            Kirigami.Avatar {
+                                anchors.fill: parent
+                                anchors.margins: 4
+                                source: root.avatar
+                                name: root.realName || root.userName
+                            }
                         }
-                        Text {
-                            text: entry.modelData.text || ""
-                            color: rowMouse.containsMouse ? root.mint : root.textColor
-                            font.pixelSize: 13
+                        ColumnLayout {
+                            spacing: 2
                             Layout.fillWidth: true
-                        }
-                        Text {
-                            text: entry.modelData.hint || ""
-                            color: root.subText
-                            font.pixelSize: 11
-                            visible: text.length > 0
+                            Text {
+                                text: root.realName || root.userName
+                                color: root.textColor
+                                font.pixelSize: 16
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            Text {
+                                text: root.userName ? root.userName + "@" + root.hostName : ""
+                                color: root.mint
+                                font.pixelSize: 12
+                            }
+                            Text {
+                                text: root.uptime ? "up " + root.uptime : root.osName
+                                color: root.subText
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
                         }
                     }
-                    MouseArea {
-                        id: rowMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: root.act(entry.modelData.cmd)
+
+                    Repeater {
+                        model: root.menuModel
+                        delegate: Item {
+                            id: entry
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: modelData.separator ? 11 : 34
+
+                            Rectangle {
+                                visible: !!entry.modelData.separator
+                                anchors.centerIn: parent
+                                width: parent.width - 12
+                                height: 1
+                                color: Qt.rgba(root.mint.r, root.mint.g, root.mint.b, 0.12)
+                            }
+                            Rectangle {
+                                visible: !entry.modelData.separator
+                                anchors.fill: parent
+                                radius: 9
+                                color: rowMouse.containsMouse ? Qt.rgba(root.mint.r, root.mint.g, root.mint.b, 0.13) : "transparent"
+                                Behavior on color { ColorAnimation { duration: 100 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 11
+                                    Kirigami.Icon {
+                                        source: entry.modelData.icon || ""
+                                        Layout.preferredWidth: 18
+                                        Layout.preferredHeight: 18
+                                        isMask: true
+                                        color: rowMouse.containsMouse ? root.mint : root.textColor
+                                    }
+                                    Text {
+                                        text: entry.modelData.text || ""
+                                        color: rowMouse.containsMouse ? root.mint : root.textColor
+                                        font.pixelSize: 13
+                                        Layout.fillWidth: true
+                                    }
+                                    Text {
+                                        text: entry.modelData.hint || ""
+                                        color: root.subText
+                                        font.pixelSize: 11
+                                        visible: text.length > 0
+                                    }
+                                }
+                                MouseArea {
+                                    id: rowMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: root.act(entry.modelData.cmd)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        Item { Layout.preferredHeight: 4 }
     }
 
-    // ---- panel styling (same technique as the dock) ---------------------------------
+    // ---- panel styling ----------------------------------------------------------------
     property Item panelRoot: null
-    property Item panelFrame: null
     property var panelFrames: []
     property Item tint: null
 
@@ -224,22 +286,16 @@ PlasmoidItem {
             if (a && frames.indexOf(a) >= 0) { master = a; break }
         }
         if (!master) return
-        panelFrame = master
         panelFrames = frames.filter(f => f === master || f.anchors.fill === master)
-        // rounded blur shape (matches the dock), theme background invisible
         for (const f of panelFrames) {
-            f.imagePath = "dialogs/background"
+            f.imagePath = "dialogs/background"    // rounded blur shape, like the dock
             f.opacity = 0
         }
-        if (!tint) {
-            tint = Qt.createQmlObject('import QtQuick; Rectangle { z: -1 }', panelRoot, "pixegamiTint")
-        }
+        if (!tint) tint = Qt.createQmlObject('import QtQuick; Rectangle { z: -1 }', panelRoot, "pixegamiTint")
         tint.anchors.fill = master
         tint.radius = Qt.binding(() => panelRoot.floatingness > 0.5 ? 12 : 0)
-        tint.gradient = null
         tint.color = Qt.binding(() => Qt.rgba(root.navy.r, root.navy.g, root.navy.b, Plasmoid.configuration.bgOpacity))
     }
-    // Plasma may rebuild bits of the panel (theme change, floating toggles): re-apply.
     Timer { interval: 400; running: true; onTriggered: root.stylePanel() }
     Timer {
         interval: 2000; repeat: true; running: root.panelRoot !== null

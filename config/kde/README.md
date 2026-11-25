@@ -65,18 +65,26 @@ then add "Pixegami Dock" to a bottom panel. After editing the QML, run
 
 ## Pixegami Bar (`plasmoids/com.pixegami.topbar`)
 
-The top bar (panel 185, floating, 34px) styled to match the dock, plus a
-Pixegami logo button on the left (it replaced Kickoff).
+The top bar is three floating "islands", each its own fit-to-content top panel
+with a Pixegami Bar widget in it that styles the panel: the theme background
+is made invisible but kept as the rounded blur shape (KWin blurs behind it),
+and a navy glass tint is drawn under the widgets. Islands are rounded while
+floating and flatten against the edge when a maximized window touches them.
 
-- Panel styling: the theme's panel background is made invisible but kept as
-  the blur shape (rounded `dialogs/background`), so KWin blurs behind the bar;
-  a semi-transparent navy tint is drawn under the panel's widgets. Rounded
-  while floating; flat when a maximized window makes Plasma un-float it.
-- Logo button opens the Pixegami menu: header with user@host, OS and uptime,
-  then Applications (Meta, opens the Application Dashboard), Search (KRunner),
-  System Settings, Discover, About This System, Lock Screen, Sleep, Restart,
-  Shut Down, Log Out.
-- Settings in `contents/config/main.xml`: `bgOpacity` (0.55), `stylePanel`.
+| Island | Panel | Contents |
+|---|---|---|
+| left | 242 | Pixegami logo button (showLogo=true) + Global Menu (app menus) |
+| centre | 245 | Digital Clock ("Wed 25 Nov  10:53 PM") + styler |
+| right | 185 | Activity Bar, Color Picker, System Tray + styler |
+
+The logo opens the user menu, drawn in Pixegami navy: profile picture
+(`/var/lib/AccountsService/icons/$USER`) in a mint ring, real name,
+user@host, uptime; then Applications (Meta), Search (KRunner), System
+Settings, Account, About This System, Lock Screen, Sleep, Restart, Shut Down,
+Log Out.
+
+Settings in `contents/config/main.xml`: `showLogo` (false = invisible styler
+only), `bgOpacity` (0.72), `stylePanel`.
 
 Widget order is saved by Plasma on shutdown, so to reorder by hand stop
 plasmashell first, edit `AppletOrder` in `plasma-org.kde.plasma.desktop-appletsrc`,

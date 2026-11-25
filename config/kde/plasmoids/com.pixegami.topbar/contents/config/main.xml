@@ -4,8 +4,12 @@
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
   <kcfgfile name=""/>
   <group name="General">
+    <!-- false: invisible, only styles the panel it sits in (clock / tray islands) -->
+    <entry name="showLogo" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="bgOpacity" type="Double">
-      <default>0.55</default>
+      <default>0.72</default>
     </entry>
     <entry name="stylePanel" type="Bool">
       <default>true</default>
