@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Id": "com.pixegami.topbar",
+        "Name": "Pixegami Bar",
+        "Description": "Pixegami logo menu that also styles its panel: semi-transparent navy with blur, matching the Pixegami Dock",
+        "Icon": "start-here-kde",
+        "Category": "Application Launchers",
+        "License": "GPL-2.0+",
+        "Version": "1.0",
+        "Authors": [ { "Name": "Farhan" } ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

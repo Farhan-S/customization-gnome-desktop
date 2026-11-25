@@ -62,3 +62,22 @@ room for the zoomed icons.
 Install: `ln -sfn ~/.dotfiles/config/kde/plasmoids/com.pixegami.dock ~/.local/share/plasma/plasmoids/`
 then add "Pixegami Dock" to a bottom panel. After editing the QML, run
 `systemctl --user restart plasma-plasmashell.service` to reload it.
+
+## Pixegami Bar (`plasmoids/com.pixegami.topbar`)
+
+The top bar (panel 185, floating, 34px) styled to match the dock, plus a
+Pixegami logo button on the left (it replaced Kickoff).
+
+- Panel styling: the theme's panel background is made invisible but kept as
+  the blur shape (rounded `dialogs/background`), so KWin blurs behind the bar;
+  a semi-transparent navy tint is drawn under the panel's widgets. Rounded
+  while floating; flat when a maximized window makes Plasma un-float it.
+- Logo button opens the Pixegami menu: header with user@host, OS and uptime,
+  then Applications (Meta, opens the Application Dashboard), Search (KRunner),
+  System Settings, Discover, About This System, Lock Screen, Sleep, Restart,
+  Shut Down, Log Out.
+- Settings in `contents/config/main.xml`: `bgOpacity` (0.55), `stylePanel`.
+
+Widget order is saved by Plasma on shutdown, so to reorder by hand stop
+plasmashell first, edit `AppletOrder` in `plasma-org.kde.plasma.desktop-appletsrc`,
+then start it again.
